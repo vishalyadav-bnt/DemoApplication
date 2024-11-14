@@ -55,7 +55,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN:  squ_0fc989cbce7b8b2d7cd9aabd879c4f3c792905d9
         run: |
-          DEMO/gradlew build sonar --stacktrace
+          cd DEMO
+          ./gradlew build sonar --stacktrace
  
       - name: Upload SARIF report
         uses: github/codeql-action/upload-sarif@v2
