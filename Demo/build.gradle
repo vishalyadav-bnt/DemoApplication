@@ -1,0 +1,46 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.5'
+	id 'io.spring.dependency-management' version '1.1.6'
+	id 'org.sonarqube' version '5.1.0.4882'     //'10.7.0.96327'
+    id 'jacoco'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+sonar {
+    properties {
+        property 'sonar.projectKey', 'com.example%3Aemployee'
+        property 'sonar.projectName', 'employee'
+        property 'sonar.host.url', 'http://localhost:9000'
+        property 'sonar.login', 'squ_0fc989cbce7b8b2d7cd9aabd879c4f3c792905d9'
+        property 'sonar.sourceEncoding', 'UTF-8'
+        property 'sonar.language', 'java'
+        property 'sonar.java.binaries', "${buildDir}/classes"
+        property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+        property 'sonar.junit.reportPaths', "${buildDir}/test-results/test"
+        property 'sonar.tests', 'src/test/java'
+        property 'sonar.sources', 'src/main/java'
+    }
+}
