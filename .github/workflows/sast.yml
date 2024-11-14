@@ -55,8 +55,8 @@ jobs:
         
       - name: Build and analyze
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN:  squ_0fc989cbce7b8b2d7cd9aabd879c4f3c792905d9
+          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.13-11/x64
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           cd Demo
           ./gradlew build sonar --stacktrace
