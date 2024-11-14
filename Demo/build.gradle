@@ -34,7 +34,8 @@ sonar {
         property 'sonar.projectKey', 'com.example%3Aemployee'
         property 'sonar.projectName', 'employee'
         property 'sonar.host.url', 'http://localhost:9000'
-        property 'sonar.login', 'squ_0fc989cbce7b8b2d7cd9aabd879c4f3c792905d9'
+        property "sonar.login", "admin"
+        property "sonar.password", "Vishal@12345"
         property 'sonar.sourceEncoding', 'UTF-8'
         property 'sonar.language', 'java'
         property 'sonar.java.binaries', "${buildDir}/classes"
