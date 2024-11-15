@@ -41,3 +41,14 @@ sonar {
         property 'sonar.sources', 'src/main/java'
     }
 }
+jacocoTestReport {
+    dependsOn test
+ 
+    reports {
+        xml.required = true
+        html.required = true
+    }
+ 
+    sourceSets sourceSets.main
+    executionData fileTree(dir: buildDir, include: '**/*.exec')
+}
