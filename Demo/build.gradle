@@ -33,6 +33,7 @@ sonar {
     properties {
         property 'sonar.projectKey', 'DemoApplication'
         property 'sonar.projectName', 'DemoApplication'
+        property "sonar.login", 'sqp_c80eda82e389a358a0cc1a82e88aa48095309dcc'
         property 'sonar.sourceEncoding', 'UTF-8'
         property 'sonar.language', 'java'
         property 'sonar.java.source', '17'
@@ -51,4 +52,9 @@ jacocoTestReport {
  
     sourceSets sourceSets.main
     executionData fileTree(dir: buildDir, include: '**/*.exec')
+}
+
+tasks.withType(JavaCompile) {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
