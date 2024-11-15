@@ -42,7 +42,10 @@ jobs:
       - name: Wait for SonarQube to start
         run: |
           timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000)" != "200" ]]; do sleep 5; done'
-          
+      
+      - name: Make gradlew executable
+        run: chmod +x Demo/gradlew
+
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
