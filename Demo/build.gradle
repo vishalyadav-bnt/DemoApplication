@@ -46,8 +46,8 @@ jacocoTestReport {
     dependsOn test
  
     reports {
-        xml.required = true
-        html.required = true
+      xml.enabled true
+      html.enabled true
     }
  
     sourceSets sourceSets.main
