@@ -43,13 +43,13 @@ sonar {
     }
 }
 jacocoTestReport {
-    dependsOn test
- 
+    dependsOn test // Ensure test task runs before the report generation
+
     reports {
-      xml.enabled true
-      html.enabled true
+        xml.required.set(true)  // Use 'required.set(true)' instead of 'xml.enabled true'
+        html.required.set(true) // Use 'required.set(true)' instead of 'html.enabled true'
     }
- 
+
     sourceSets sourceSets.main
     executionData fileTree(dir: buildDir, include: '**/*.exec')
 }
