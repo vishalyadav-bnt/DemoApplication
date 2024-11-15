@@ -52,7 +52,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           cd Demo
-          ./gradlew sonar \
+          ./gradlew sonar --stacktrace --info \
             -Dsonar.projectKey=DemoApplication \
             -Dsonar.projectName='DemoApplication' \
             -Dsonar.host.url=http://localhost:9000 \
