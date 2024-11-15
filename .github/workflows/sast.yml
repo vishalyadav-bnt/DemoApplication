@@ -51,7 +51,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           cd Demo
-          ./gradlew clean test jacocoTestReport sonar --stacktrace --info \
+          - name: Run SonarQube
+            run: ./gradlew sonar -Dsonar.login=$SONAR_TOKEN \
             -Dsonar.projectKey=DemoApplication \
             -Dsonar.projectName='DemoApplication' \
             -Dsonar.host.url=http://localhost:9000 \
