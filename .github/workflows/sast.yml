@@ -35,6 +35,9 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle*') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+            
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x Demo/gradlew
 
       # Step 4: Run tests (this will include starting SonarQube with TestContainers)
       - name: Run Tests (Including SonarQube Container Setup)
