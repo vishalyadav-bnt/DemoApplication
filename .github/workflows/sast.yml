@@ -70,12 +70,12 @@ jobs:
       - name: Debug SARIF File Path
         run: ls -R Demo/build     
 
-      # Step 6: Upload SARIF Report to GitHub
-      - name: Upload SARIF Report to GitHub
-        if: success()  # Only upload if the SonarQube analysis step succeeded
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: Demo/build/sonar-report.sarif 
+      # # Step 6: Upload SARIF Report to GitHub
+      # - name: Upload SARIF Report to GitHub
+      #   if: success()  # Only upload if the SonarQube analysis step succeeded
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   with:
+      #     sarif_file: Demo/build/sonar-report.sarif 
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
