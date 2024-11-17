@@ -72,4 +72,4 @@ jobs:
         if: success()  # Only upload if the SonarQube analysis step succeeded
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: build/sonar-report.sarif 
+          sarif_file: Demo/build/sonar-report.sarif 
