@@ -41,7 +41,7 @@ jobs:
 
       # Step 4: Run tests (this will include starting SonarQube with TestContainers)
       - name: Run Tests (Including SonarQube Container Setup)
-        run: ./gradlew test
+        run: cd Demo && ./gradlew test
 
       # Step 5: Run SonarQube Analysis using the Gradle SonarQube plugin
       - name: Run SonarQube Analysis
@@ -49,8 +49,7 @@ jobs:
           SONAR_HOST_URL: http://localhost:9000  # Update with TestContainers URL
           SONAR_LOGIN: admin  # Default SonarQube login
           SONAR_PASSWORD: admin  # Default SonarQube password
-        run: |
-          ./gradlew sonarqube \
+        run: cd Demo && ./gradlew sonarqube \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_LOGIN \
             -Dsonar.password=$SONAR_PASSWORD
