@@ -49,7 +49,8 @@ jobs:
           SONAR_HOST_URL: http://localhost:9000  # Update with TestContainers URL
           SONAR_LOGIN: admin  # Default SonarQube login
           SONAR_PASSWORD: admin  # Default SonarQube password
-        run: cd Demo && ./gradlew sonarqube \
+        run: |
+           cd Demo && ./gradlew sonarqube \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_LOGIN \
             -Dsonar.password=$SONAR_PASSWORD
