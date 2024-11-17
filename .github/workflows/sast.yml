@@ -79,6 +79,9 @@ jobs:
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
+        if: always()
         with:
           name: sonar-report
-          path: Demo/build/sonar-report.sarif    
+          path: sonar-report.sarif
+          retention-days: 30
+
