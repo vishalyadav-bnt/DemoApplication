@@ -70,6 +70,6 @@ jobs:
       # Step 6: Upload SARIF Report to GitHub
       - name: Upload SARIF Report to GitHub
         if: success()  # Only upload if the SonarQube analysis step succeeded
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: build/sonar-report.sarif 
