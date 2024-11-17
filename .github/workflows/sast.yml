@@ -25,7 +25,7 @@ jobs:
           java-version: 17
           java-package: jdk
           check-latest: false
-          distribution: 'adoptopenjdk' # or 'adoptopenjdk', 'zulu', etc.
+          distribution: 'adopt' # or 'adoptopenjdk', 'zulu', etc.
 
       # Step 3: Set up Gradle cache to speed up builds
       - name: Set Up Gradle Cache
