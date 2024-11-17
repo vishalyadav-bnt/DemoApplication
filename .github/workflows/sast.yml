@@ -1,64 +1,56 @@
-name: SonarQube Analysis
+name: SonarQube SAST Workflow with TestContainers
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  sonarqube:
-    name: SonarQube Scan
+  sonarqube-scan:
+    name: Run SonarQube Analysis with TestContainers
     runs-on: ubuntu-latest
-    
-    services:
-      sonarqube:
-        image: sonarqube:community
-        ports:
-          - 9000:9000
-        
+
     steps:
-      - name: Checkout code
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          
-      - name: Set up JDK 17
+
+      # Step 2: Set up Java (ensure the version matches your Spring Boot application)
+      - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
-          
-      - name: Cache SonarQube packages
+          java-version: '17'  # Change to your project's Java version
+
+      # Step 3: Set up Gradle cache to speed up builds
+      - name: Set Up Gradle Cache
         uses: actions/cache@v3
         with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-          
-      - name: Wait for SonarQube to start
-        run: |
-          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000)" != "200" ]]; do sleep 5; done'
-      
-      - name: Make gradlew executable
-        run: chmod +x Demo/gradlew
+          path: ~/.gradle
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/build.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-      - name: Build and analyze
+      # Step 4: Run tests (this will include starting SonarQube with TestContainers)
+      - name: Run Tests (Including SonarQube Container Setup)
+        run: ./gradlew test
+
+      # Step 5: Run SonarQube Analysis using the Gradle SonarQube plugin
+      - name: Run SonarQube Analysis
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: http://localhost:9000  # Update with TestContainers URL
+          SONAR_LOGIN: admin  # Default SonarQube login
+          SONAR_PASSWORD: admin  # Default SonarQube password
         run: |
-          cd Demo
-          ./gradlew clean test jacocoTestReport sonar --stacktrace \
-            -Dsonar.projectKey=DemoApplication \
-            -Dsonar.projectName='DemoApplication' \
-            -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            
-      - name: Upload SARIF report
+          ./gradlew sonarqube \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_LOGIN \
+            -Dsonar.password=$SONAR_PASSWORD
+
+      # Step 6: Upload SARIF Report to GitHub
+      - name: Upload SARIF Report to GitHub
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: DemoApplication/build/sonar/sonar-report.sarif
+          sarif_file: build/sonar-report.sarif  # Adjust path if needed
