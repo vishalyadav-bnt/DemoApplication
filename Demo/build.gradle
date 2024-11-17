@@ -32,3 +32,14 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "testcontainer-project"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.login", "admin"
+        property "sonar.password", "admin"
+        property "sonar.sarif.enabled", "true"
+        property "sonar.sarif.filepath", "build/sonar-report.sarif"
+    }
+}
