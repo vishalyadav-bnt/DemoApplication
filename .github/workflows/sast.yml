@@ -38,6 +38,18 @@ jobs:
             
       - name: Make Gradle Wrapper Executable
         run: chmod +x Demo/gradlew
+        
+      - name: Start SonarQube Container
+        run: |
+          docker run -d -p 9000:9000 sonarqube:lts
+          for i in {1..30}; do
+            if curl -s http://localhost:9000 | grep "SonarQube"; then
+              echo "SonarQube is ready"
+              break
+            fi
+            echo "Waiting for SonarQube..."
+            sleep 5
+          done
 
       # Step 4: Run tests (this will include starting SonarQube with TestContainers)
       - name: Run Tests (Including SonarQube Container Setup)
@@ -57,6 +69,7 @@ jobs:
 
       # Step 6: Upload SARIF Report to GitHub
       - name: Upload SARIF Report to GitHub
+        if: success()  # Only upload if the SonarQube analysis step succeeded
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: build/sonar-report.sarif  # Adjust path if needed
+          sarif_file: build/sonar-report.sarif 
