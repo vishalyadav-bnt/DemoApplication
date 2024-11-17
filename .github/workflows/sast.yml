@@ -66,6 +66,9 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_LOGIN \
             -Dsonar.password=$SONAR_PASSWORD
+            
+      - name: Debug SARIF File Path
+        run: ls -R Demo/build     
 
       # Step 6: Upload SARIF Report to GitHub
       - name: Upload SARIF Report to GitHub
