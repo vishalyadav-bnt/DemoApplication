@@ -50,7 +50,7 @@ jobs:
           SONAR_LOGIN: admin  # Default SonarQube login
           SONAR_PASSWORD: admin  # Default SonarQube password
         run: |
-           cd Demo && ./gradlew sonarqube \
+           cd Demo && ./gradlew sonar \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_LOGIN \
             -Dsonar.password=$SONAR_PASSWORD
