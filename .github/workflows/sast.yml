@@ -66,7 +66,7 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_LOGIN \
             -Dsonar.password=$SONAR_PASSWORD
-            
+
       - name: Debug SARIF File Path
         run: ls -R Demo/build     
 
@@ -76,3 +76,9 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: Demo/build/sonar-report.sarif 
+
+      - name: Upload SARIF File as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sonar-report
+          path: Demo/build/sonar-report.sarif    
