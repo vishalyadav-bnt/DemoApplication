@@ -74,7 +74,7 @@ jobs:
       - name: Debug SARIF File Path
         run: ls -R Demo/build/reports/  
 
-     - name: Create GitHub Release with SARIF
+      - name: Create GitHub Release with SARIF
         env:
           GH_TOKEN: ${{ github.token }}  # Using built-in token instead of GHCR_PATT
         run: |
