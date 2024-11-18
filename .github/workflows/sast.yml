@@ -12,6 +12,10 @@ jobs:
   sonarqube-scan:
     name: Run SonarQube Analysis with TestContainers
     runs-on: ubuntu-latest
+    permissions: 
+      contents: read
+      packages: write
+      security-events: write 
 
     steps:
       # Step 1: Checkout the repository
@@ -70,19 +74,16 @@ jobs:
       - name: Debug SARIF File Path
         run: ls -R Demo/build/reports/  
 
-      - name: Upload SARIF Report to GitHub Package
+     - name: Create GitHub Release with SARIF
         env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_PATT }}  # GitHub Token is required for authentication
+          GH_TOKEN: ${{ github.token }}  # Using built-in token instead of GHCR_PATT
         run: |
-          # Create a versioned GitHub Package for SARIF Report
-          echo $GITHUB_TOKEN | gh auth login --with-token
-          PACKAGE_NAME="sonar-report"
-          VERSION="v1.0.0" 
+          VERSION="v1.0.0-$(date +%Y%m%d-%H%M%S)"
+          gh release create $VERSION \
+            --title "SonarQube SARIF Report $VERSION" \
+            --notes "Generated SonarQube SARIF Report" \
+            Demo/build/reports/sonar-report.sarif
 
-          # Create a release to store SARIF file in GitHub Package
-          gh release create $VERSION Demo/build/reports/sonar-report.sarif --title "SonarQube SARIF Report" --notes "Generated SonarQube SARIF Report"
-
-      # Step 11: Upload SARIF File as Artifact (Optional for keeping a backup in GitHub Actions)
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
         with:

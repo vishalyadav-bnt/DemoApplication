@@ -40,6 +40,7 @@ sonarqube {
         property "sonar.login", "admin"
         property "sonar.password", "admin"
         property "sonar.sarif.enabled", "true"
+        property 'sonar.projectVersion', '1.0'
         property "sonar.sarif.reportPaths", "build/reports/sonar-report.sarif"
         property 'sonar.sources', 'src/main/java'
         property 'sonar.tests', 'src/test/java'
