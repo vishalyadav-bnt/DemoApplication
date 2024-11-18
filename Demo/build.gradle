@@ -45,7 +45,7 @@ sonarqube {
         property "sonar.sources", "src/main/java"                          // Path to your source code
         property "sonar.java.source", "17"                                  // Java version used in the project
         property "sonar.java.binaries", "build/classes/java/main"          // Path to compiled classes
-        property "sonar.java.libraries", configurations.runtimeClasspath.files.asPath  // Path to libraries (runtime dependencies)
+        property "sonar.java.libraries", files(configurations.runtimeClasspath).asPath
 
         // Test properties
         property "sonar.tests", "src/test/java"                            // Path to your test code
