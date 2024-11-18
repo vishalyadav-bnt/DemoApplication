@@ -72,12 +72,12 @@ jobs:
 
       - name: Upload SARIF Report to GitHub Package
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Token is required for authentication
+          GITHUB_TOKEN: ${{ secrets.GHCR_PATT }}  # GitHub Token is required for authentication
         run: |
           # Create a versioned GitHub Package for SARIF Report
-          gh auth login --with-token <<< $GITHUB_TOKEN
+          echo $GITHUB_TOKEN | gh auth login --with-token
           PACKAGE_NAME="sonar-report"
-          VERSION="v1.0.0"  # You can dynamically set the version based on a tag or branch
+          VERSION="v1.0.0" 
 
           # Create a release to store SARIF file in GitHub Package
           gh release create $VERSION Demo/build/reports/sonar-report.sarif --title "SonarQube SARIF Report" --notes "Generated SonarQube SARIF Report"
