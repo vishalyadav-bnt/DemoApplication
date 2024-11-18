@@ -70,13 +70,19 @@ jobs:
       - name: Debug SARIF File Path
         run: ls -R Demo/build/reports/  
 
-      # Step 10: Upload SARIF Report to GitHub
-      - name: Upload SARIF Report
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: Demo/build/reports/sonar-report.sarif
+      - name: Upload SARIF Report to GitHub Package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Token is required for authentication
+        run: |
+          # Create a versioned GitHub Package for SARIF Report
+          gh auth login --with-token <<< $GITHUB_TOKEN
+          PACKAGE_NAME="sonar-report"
+          VERSION="v1.0.0"  # You can dynamically set the version based on a tag or branch
 
-      # Step 11: Upload SARIF Report as an Artifact
+          # Create a release to store SARIF file in GitHub Package
+          gh release create $VERSION Demo/build/reports/sonar-report.sarif --title "SonarQube SARIF Report" --notes "Generated SonarQube SARIF Report"
+
+      # Step 11: Upload SARIF File as Artifact (Optional for keeping a backup in GitHub Actions)
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
         with:
