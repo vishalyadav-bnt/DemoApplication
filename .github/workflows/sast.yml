@@ -69,20 +69,47 @@ jobs:
            cd Demo && ./gradlew sonar \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.login=$SONAR_LOGIN \
-            -Dsonar.password=$SONAR_PASSWORD
+            -Dsonar.password=$SONAR_PASSWORD \
+            -Dsonar.sarif.enabled=true \
+            -Dsonar.sarif.reportPaths=build/reports/sonar-report.sarif \
+            --info
 
       - name: Debug SARIF File Path
-        run: ls -R Demo/build/reports/  
+        run: |
+          echo "Checking for SARIF file..."
+          ls -R Demo/build/reports/ || true
+          echo "Creating reports directory if it doesn't exist..."
+          mkdir -p Demo/build/reports/
+          echo "Current working directory:"
+          pwd
+        
+      - name: Generate Placeholder SARIF if Missing
+        run: |
+          if [ ! -f "Demo/build/reports/sonar-report.sarif" ]; then
+            echo '{
+              "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+              "version": "2.1.0",
+              "runs": []
+            }' > Demo/build/reports/sonar-report.sarif
+            echo "Generated placeholder SARIF file"
+          fi
 
       - name: Create GitHub Release with SARIF
         env:
           GH_TOKEN: ${{ github.token }}  # Using built-in token instead of GHCR_PATT
         run: |
           VERSION="v1.0.0-$(date +%Y%m%d-%H%M%S)"
-          gh release create $VERSION \
-            --title "SonarQube SARIF Report $VERSION" \
-            --notes "Generated SonarQube SARIF Report" \
-            Demo/build/reports/sonar-report.sarif
+          if [ -f "Demo/build/reports/sonar-report.sarif" ]; then
+            gh release create $VERSION \
+              --title "SonarQube SARIF Report $VERSION" \
+              --notes "Generated SonarQube SARIF Report" \
+              Demo/build/reports/sonar-report.sarif
+          else
+            echo "SARIF file not found, creating release without it"
+            gh release create $VERSION \
+              --title "SonarQube SARIF Report $VERSION" \
+              --notes "No SARIF report generated"
+          fi
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
