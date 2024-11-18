@@ -58,9 +58,9 @@ jobs:
       # Step 5: Run SonarQube Analysis using the Gradle SonarQube plugin
       - name: Run SonarQube Analysis
         env:
-          SONAR_HOST_URL: http://localhost:9000  # Update with TestContainers URL
-          SONAR_LOGIN: admin  # Default SonarQube login
-          SONAR_PASSWORD: admin  # Default SonarQube password
+          SONAR_HOST_URL: http://localhost:9000  
+          SONAR_LOGIN: admin 
+          SONAR_PASSWORD: admin 
         run: |
            cd Demo && ./gradlew sonar \
             -Dsonar.host.url=$SONAR_HOST_URL \
@@ -75,13 +75,15 @@ jobs:
       #   if: success()  # Only upload if the SonarQube analysis step succeeded
       #   uses: github/codeql-action/upload-sarif@v3
       #   with:
-      #     sarif_file: Demo/build/sonar-report.sarif 
+      #     sarif_file: Demo/build/reports/sonar-report.sarif
 
-      - name: Upload SARIF File as Artifact
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: sonar-report
-          path: sonar-report.sarif
-          retention-days: 30
+     - name: Upload SARIF File as Artifact
+       uses: actions/upload-artifact@v3
+       if: always()
+       with:
+         name: sonar-report
+         path: Demo/build/reports/sonar-report.sarif
+         retention-days: 30
+         if-no-files-found: warn
+
 

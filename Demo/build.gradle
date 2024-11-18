@@ -40,6 +40,6 @@ sonarqube {
         property "sonar.login", "admin"
         property "sonar.password", "admin"
         property "sonar.sarif.enabled", "true"
-        property "sonar.report.export.path", "build/sonar-report.sarif"
+        property "sonar.sarif.reportPaths", "build/reports/sonar-report.sarif"
     }
 }
