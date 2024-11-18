@@ -125,5 +125,5 @@ jobs:
           REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_TAG="ghcr.io/${REPO_OWNER}/${REPO_NAME}-dependency-check-report:latest"
-          docker build -t $IMAGE_TAG --build-arg SARIF_REPORT=./sarif-reports/sonar-report.sarif .
+          docker build -f Demo/Dockerfile -t $IMAGE_TAG --build-arg SARIF_REPORT=./sarif-reports/sonar-report.sarif Demo/
           docker push $IMAGE_TAG
