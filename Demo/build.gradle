@@ -38,7 +38,7 @@ sonarqube {
         property "sonar.projectKey", "testcontainer-project"
         property "sonar.host.url", "http://localhost:9000"
         property "sonar.login", "admin"
-        property "sonar.password", "admin"
+        property "sonar.password", "Bntsoft@12345"
         property "sonar.sarif.enabled", "true"
         property 'sonar.projectVersion', '1.0'
         property "sonar.sarif.reportPaths", "build/reports/sonar-report.sarif"

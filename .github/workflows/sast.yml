@@ -79,7 +79,7 @@ jobs:
             -Dsonar.tests=src/test/java \
             -Dsonar.java.libraries=build/libs/*.jar \
             -Dsonar.sourceEncoding=UTF-8 \
-            --debug
+            --info
 
       - name: Debug SARIF File Path
         run: |
@@ -114,3 +114,14 @@ jobs:
           name: test-results
           path: Demo/build/reports/tests/
           retention-days: 7
+
+      - name: Publish SARIF Report to GitHub Packages
+        run: |
+          echo "Publishing SARIF Report to GitHub Packages"
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          mkdir -p sarif-reports
+          cp Demo/build/reports/sonar-report.sarif ./sarif-reports/
+          ls -alh ./sarif-reports
+          IMAGE_TAG="ghcr.io/$(echo DevBNTSoftNP/Sample-Owasp | tr '[:upper:]' '[:lower:]')/dependency-check-report:latest"
+          docker build -t $IMAGE_TAG --build-arg SARIF_REPORT=./sarif-reports/sonar-report.sarif .
+          docker push $IMAGE_TAG    
