@@ -41,5 +41,10 @@ sonarqube {
         property "sonar.password", "admin"
         property "sonar.sarif.enabled", "true"
         property "sonar.sarif.reportPaths", "build/reports/sonar-report.sarif"
+        property 'sonar.sources', 'src/main/java'
+        property 'sonar.tests', 'src/test/java'
+        property 'sonar.language', 'java'
+        property 'sonar.sourceEncoding', 'UTF-8'
+        property 'sonar.exclusions', '**/test/**, **/generated/**' // Exclude test or generated files if needed
     }
 }

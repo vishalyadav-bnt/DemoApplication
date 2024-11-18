@@ -70,11 +70,6 @@ jobs:
       - name: Debug SARIF File Path
         run: ls -R Demo/build/reports/  
 
-      - name: Run ESLint for SARIF Report
-        run: |
-          npm install -g eslint
-          eslint -f sarif -o Demo/build/reports/sonar-report.sarif .
-
       # Step 10: Upload SARIF Report to GitHub
       - name: Upload SARIF Report
         uses: github/codeql-action/upload-sarif@v3
