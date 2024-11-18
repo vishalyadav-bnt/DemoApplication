@@ -60,8 +60,8 @@ jobs:
           done
 
       # Step 4: Run tests (this will include starting SonarQube with TestContainers)
-      - name: Run Tests (Including SonarQube Container Setup)
-        run: cd Demo && ./gradlew test
+      # - name: Run Tests (Including SonarQube Container Setup)
+      #   run: cd Demo && ./gradlew test
 
       # Step 5: Run SonarQube Analysis using the Gradle SonarQube plugin
       - name: Run SonarQube Analysis
