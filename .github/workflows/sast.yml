@@ -98,22 +98,22 @@ jobs:
             echo "Generated placeholder SARIF file"
           fi
 
-      - name: Create GitHub Release with SARIF
-        env:
-          GH_TOKEN: ${{ github.token }}  # Using built-in token instead of GHCR_PATT
-        run: |
-          VERSION="v1.0.0-$(date +%Y%m%d-%H%M%S)"
-          if [ -f "Demo/build/reports/sonar-report.sarif" ]; then
-            gh release create $VERSION \
-              --title "SonarQube SARIF Report $VERSION" \
-              --notes "Generated SonarQube SARIF Report" \
-              Demo/build/reports/sonar-report.sarif
-          else
-            echo "SARIF file not found, creating release without it"
-            gh release create $VERSION \
-              --title "SonarQube SARIF Report $VERSION" \
-              --notes "No SARIF report generated"
-          fi
+      # - name: Create GitHub Release with SARIF
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}  # Using built-in token instead of GHCR_PATT
+      #   run: |
+      #     VERSION="v1.0.0-$(date +%Y%m%d-%H%M%S)"
+      #     if [ -f "Demo/build/reports/sonar-report.sarif" ]; then
+      #       gh release create $VERSION \
+      #         --title "SonarQube SARIF Report $VERSION" \
+      #         --notes "Generated SonarQube SARIF Report" \
+      #         Demo/build/reports/sonar-report.sarif
+      #     else
+      #       echo "SARIF file not found, creating release without it"
+      #       gh release create $VERSION \
+      #         --title "SonarQube SARIF Report $VERSION" \
+      #         --notes "No SARIF report generated"
+      #     fi
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
