@@ -32,45 +32,45 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
-
 sonarqube {
     properties {
-        // Basic Properties
-        property "sonar.projectKey", "testcontainer-project"
-        property "sonar.projectName", "Demo Application"
-        property "sonar.host.url", "http://localhost:9000"
-        property "sonar.login", "admin"
-        property "sonar.password", "admin"
-        
+        // Basic Properties for SonarQube project
+        property "sonar.projectKey", "testcontainer-project"                // Unique project key in SonarQube
+        property "sonar.projectName", "Demo Application"                   // Project name in SonarQube
+        property "sonar.host.url", "http://localhost:9000"                 // URL of your SonarQube instance
+        property "sonar.login", "admin"                                    // SonarQube login credentials (use secure tokens instead of 'admin' in production)
+        property "sonar.password", "admin"                                 // SonarQube password (preferably use a token here)
+
         // Source code properties
-        property "sonar.sources", "src/main/java"
-        property "sonar.java.source", "17"
-        property "sonar.java.binaries", "build/classes/java/main"
-        property "sonar.java.libraries", configurations.runtimeClasspath.files.asPath
-        
+        property "sonar.sources", "src/main/java"                          // Path to your source code
+        property "sonar.java.source", "17"                                  // Java version used in the project
+        property "sonar.java.binaries", "build/classes/java/main"          // Path to compiled classes
+        property "sonar.java.libraries", configurations.runtimeClasspath.files.asPath  // Path to libraries (runtime dependencies)
+
         // Test properties
-        property "sonar.tests", "src/test/java"
-        property "sonar.junit.reportPaths", "build/test-results/test"
-        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
-        
-        // SARIF properties
-        property "sonar.sarif.enabled", "true"
-        property "sonar.sarif.reportPaths", "build/reports/sonar-report.sarif"
-        
-        // Debug properties
-        property "sonar.verbose", "true"
-        property "sonar.log.level", "DEBUG"
+        property "sonar.tests", "src/test/java"                            // Path to your test code
+        property "sonar.junit.reportPaths", "build/test-results/test"      // Path to JUnit test results
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml" // Path to JaCoCo report for test coverage
+
+        // SARIF properties (for security and analysis reporting)
+        property "sonar.sarif.enabled", "true"                             // Enable SARIF format for SonarQube reports
+        property "sonar.sarif.reportPaths", "build/reports/sonar-report.sarif" // Path to SARIF report file
+
+        // Debug properties (helpful for verbose logging)
+        property "sonar.verbose", "true"                                   // Enable verbose logging for detailed analysis
+        property "sonar.log.level", "DEBUG"                                // Set log level for SonarQube (DEBUG for more detailed logs)
     }
 }
 
-// Ensure build before analysis
+// Ensure that the build task runs before the SonarQube analysis task
 tasks.sonar.dependsOn tasks.build
 
-// Create reports directory
+// Create reports directory if it doesn't already exist
 tasks.register('createReportsDir') {
     doLast {
         file("${buildDir}/reports").mkdirs()
     }
 }
 
+// Ensure that reports directory is created before running SonarQube analysis
 tasks.sonar.dependsOn createReportsDir
