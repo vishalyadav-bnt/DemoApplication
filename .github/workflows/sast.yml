@@ -16,6 +16,10 @@ jobs:
       contents: read
       packages: write
       security-events: write 
+      actions: write         # Required for workflow operations
+      id-token: write       # Required for token authentication
+      issues: write         # Required for creating issues
+      pull-requests: write  
 
     steps:
       # Step 1: Checkout the repository
