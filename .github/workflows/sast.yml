@@ -77,13 +77,13 @@ jobs:
       #   with:
       #     sarif_file: Demo/build/reports/sonar-report.sarif
 
-     - name: Upload SARIF File as Artifact
-       uses: actions/upload-artifact@v3
-       if: always()
-       with:
-         name: sonar-report
-         path: Demo/build/reports/sonar-report.sarif
-         retention-days: 30
-         if-no-files-found: warn
+      - name: Upload SARIF File as Artifact
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: sonar-report
+          path: Demo/build/reports/sonar-report.sarif
+          retention-days: 30
+          if-no-files-found: warn
 
 
