@@ -122,6 +122,8 @@ jobs:
           mkdir -p sarif-reports
           cp Demo/build/reports/sonar-report.sarif ./sarif-reports/
           ls -alh ./sarif-reports
-          IMAGE_TAG="ghcr.io/$(echo DevBNTSoftNP/Sample-Owasp | tr '[:upper:]' '[:lower:]')/dependency-check-report:latest"
+          REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_TAG="ghcr.io/${REPO_OWNER}/${REPO_NAME}-dependency-check-report:latest"
           docker build -t $IMAGE_TAG --build-arg SARIF_REPORT=./sarif-reports/sonar-report.sarif .
-          docker push $IMAGE_TAG    
+          docker push $IMAGE_TAG
