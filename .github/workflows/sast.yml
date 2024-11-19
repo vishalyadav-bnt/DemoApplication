@@ -83,10 +83,16 @@ jobs:
 
       - name: Debug SARIF File Path
         run: |
-          echo "Checking for SARIF file..."
-          ls -R Demo/build/reports/ || true
-          echo "Current working directory:"
-          pwd
+          echo "Checking for SARIF file in the reports directory..."
+          ls -R Demo/build/reports/sonar-report.sarif || true
+          echo "Checking if the SARIF file exists..."
+          if [ -f Demo/build/reports/sonar-report.sarif ]; then
+            echo "SARIF file found, displaying contents..."
+            cat Demo/build/reports/sonar-report.sarif
+          else
+            echo "SARIF file not found."
+          fi
+
           
       # - name: Generate Placeholder SARIF if Missing
       #   run: |
