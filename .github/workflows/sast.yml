@@ -61,6 +61,11 @@ jobs:
         run: |
           cd Demo && ./gradlew clean build test --info
 
+      - name: Ensure custom-reports directory exists
+        run: |
+          mkdir -p sonar-reports
+    
+
       - name: Run SonarQube Analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -71,7 +76,7 @@ jobs:
             -Dsonar.password=admin123 \
             -Dsonar.verbose=true \
             -Dsonar.sarif.enabled=true \
-            -Dsonar.sarif.reportPaths=build/reports/sonar-report.sarif \
+            -Dsonar.sarif.reportPaths=sonar-reports/sonar-report.sarif \
             -Dsonar.projectKey=testcontainer-project \
             -Dsonar.java.binaries=build/classes/java/main \
             -Dsonar.java.test.binaries=build/classes/java/test \
@@ -84,11 +89,11 @@ jobs:
       - name: Debug SARIF File Path
         run: |
           echo "Checking for SARIF file in the reports directory..."
-          ls -R build/reports/sonar-report.sarif || true
+          ls -R sonar-reports/sonar-report.sarif || true
           echo "Checking if the SARIF file exists..."
-          if [ -f build/reports/sonar-report.sarif ]; then
+          if [ -f sonar-reports/sonar-report.sarif ]; then
             echo "SARIF file found, displaying contents..."
-            cat build/reports/sonar-report.sarif
+            cat sonar-reports/sonar-report.sarif
           else
             echo "SARIF file not found."
           fi
@@ -110,7 +115,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: build/reports/sonar-report.sarif
+          path: sonar-reports/sonar-report.sarif
           retention-days: 30
 
       - name: Upload Test Results
