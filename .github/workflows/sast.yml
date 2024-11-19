@@ -94,7 +94,7 @@ jobs:
       - name: Debug SARIF File Path
         run: |
           echo "Checking for SARIF file in the reports directory..."
-          ls -R sonar-reports/sonar-report.sarif || true
+          ls -R sonar-reports || true
           echo "Checking if the SARIF file exists..."
           if [ -f sonar-reports/sonar-report.sarif ]; then
             echo "SARIF file found, displaying contents..."
