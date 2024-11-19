@@ -3,7 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.3.5'
 	id 'io.spring.dependency-management' version '1.1.6'
 	id "org.sonarqube" version "5.1.0.4882"     //'10.7.0.96327'
-    id 'jacoco' 
+   
 }
 
 group = 'com.example'
@@ -31,7 +31,6 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
-    finalizedBy jacocoTestReport
 }
 
 sonarqube {
@@ -39,7 +38,7 @@ sonarqube {
         property "sonar.projectKey", "testcontainer-project"
         property "sonar.host.url", "http://localhost:9000"
         property "sonar.login", "admin"
-        property "sonar.password", "admin"
+        property "sonar.password", "admin123"
         property "sonar.sarif.enabled", "true"
         property 'sonar.projectVersion', '1.0'
         property "sonar.sarif.reportPaths", "build/reports/sonar-report.sarif"
