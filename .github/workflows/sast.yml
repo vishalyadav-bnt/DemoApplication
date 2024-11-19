@@ -71,7 +71,7 @@ jobs:
             -Dsonar.password=admin123 \
             -Dsonar.verbose=true \
             -Dsonar.sarif.enabled=true \
-            -Dsonar.sarif.reportPaths=build/reports/sonar-report.sarif \
+            -Dsonar.sarif.reportPaths=Demo/build/reports/sonar-report.sarif \
             -Dsonar.projectKey=testcontainer-project \
             -Dsonar.java.binaries=build/classes/java/main \
             -Dsonar.java.test.binaries=build/classes/java/test \
