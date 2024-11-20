@@ -64,6 +64,7 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.projectKey=demo-project \
             -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.report.export.path=sonar-reports/sonar-report.json \
             -Dsonar.analysis.mode=publish \
             --info
 
