@@ -68,14 +68,25 @@ jobs:
 
       - name: Run SonarQube Analysis
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
+          SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
           cd Demo && ./gradlew sonar \
             -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.projectKey=testcontainer-project \
             -Dsonar.login=admin \
-            -Dsonar.password=admin123 \
-            -Dsonar.qualitygate.wait=true \
-            -Dsonar.report.export.path=sonar-report.json
+            -Dsonar.password=admin123
+
+      - name: Download SARIF Report
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
+          SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
+        run: |
+          curl -u "${{ secrets.SONAR_USERNAME }}:${{ secrets.SONAR_PASSWORD }}" \
+            "${{ secrets.SONAR_HOST_URL }}/api/sarif/download?projectKey=your_project_key" \
+            -o sonar-report.sarif
 
       # - name: Copy SARIF Report to Artifact Directory
       #   run: |
@@ -106,16 +117,16 @@ jobs:
       #       echo "Generated placeholder SARIF file"
       #     fi
 
-      - name: Convert Sonar Report to SARIF
-        run: |
-          curl -L -o sonar2sarif.jar https://github.com/Microsoft/sonar-sarif/releases/download/2.1.0/sonar2sarif.jar
-          java -jar sonar2sarif.jar -i sonar-report.json -o results.sarif
+      # - name: Convert Sonar Report to SARIF
+      #   run: |
+      #     curl -L -o sonar2sarif.jar https://github.com/Microsoft/sonar-sarif/releases/download/2.1.0/sonar2sarif.jar
+      #     java -jar sonar2sarif.jar -i sonar-report.json -o results.sarif
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: results.sarif
+          path: sonar-report.sarif
           if-no-files-found: warn  
           retention-days: 30
 
