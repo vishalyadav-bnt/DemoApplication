@@ -108,7 +108,7 @@ jobs:
 
       - name: Convert Sonar Report to SARIF
         run: |
-          curl -L -o sonar2sarif.jar https://github.com/Microsoft/sonar-sarif/releases/download/1.0.0/sonar2sarif.jar
+          curl -L -o sonar2sarif.jar https://github.com/Microsoft/sonar-sarif/releases/download/2.1.0/sonar2sarif.jar
           java -jar sonar2sarif.jar -i sonar-report.json -o results.sarif
 
       - name: Upload SARIF File as Artifact
