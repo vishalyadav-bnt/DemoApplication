@@ -93,8 +93,8 @@ jobs:
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
           SONAR_PASSWORD: admin123
         run: |
-          curl -v -u "admin:admin123" \
-          "http://localhost:9000/api/sarif/download?projectKey=testcontainer-project" \
+          curl -u $SONAR_TOKEN: \
+          "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false" \
           -o sonar-report.sarif
 
       - name: Upload SARIF File as Artifact
