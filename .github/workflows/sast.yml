@@ -42,6 +42,7 @@ jobs:
           docker run -d --name sonarqube -p 9000:9000 sonarqube:community
           echo "Waiting for SonarQube to start..."
           timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
+          docker logs sonarqube
           echo "SonarQube is ready"
 
       - name: Check if Password Change is Necessary
@@ -72,7 +73,7 @@ jobs:
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
-          cd Demo && ./gradlew sonar --stacktrace \
+          cd Demo && ./gradlew sonarqube --stacktrace \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.projectKey=testcontainer-project \
             -Dsonar.login=admin \
