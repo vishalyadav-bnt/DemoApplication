@@ -75,7 +75,6 @@ jobs:
             -Dsonar.login=admin \
             -Dsonar.password=admin123 \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.analysis.mode=preview \
             -Dsonar.report.export.path=sonar-report.json
 
       # - name: Copy SARIF Report to Artifact Directory
