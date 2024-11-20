@@ -63,12 +63,16 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.projectKey=demo-project \
             -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.report.export.path=sonar-reports/sonar-report.json \
+            -Dsonar.analysis.mode=publish \
             --info
 
-      - name: Convert SonarQube Report to SARIF
+      - name: Fetch SonarQube Issues (SARIF Conversion)
         run: |
           mkdir -p sonar-reports
+          curl -s -u admin:admin "http://localhost:9000/api/issues/search?componentKeys=demo-project&resolved=false" -o sonar-reports/sonar-report.json
+
+      - name: Convert SonarQube JSON Report to SARIF
+        run: |
           jq -n \
             --arg version "2.1.0" \
             --arg title "SonarQube Analysis" \
