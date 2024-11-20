@@ -39,38 +39,16 @@ jobs:
         
       - name: Start SonarQube Container
         run: |
-          docker run -d --name sonarqube -p 9000:9000 sonarqube:community
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
           echo "Waiting for SonarQube to start..."
           timeout 600 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
-          docker logs sonarqube
           echo "SonarQube is ready"
-
-      - name: Check if Password Change is Necessary
-        run: |
-          echo "Skipping password change as the API may not be available"
-          curl -X POST -u admin:admin "http://localhost:9000/account/reset_password?login=admin&previousPassword=admin&password=admin123" || echo "Password change failed"    
 
       - name: Generate SonarQube Token
         run: |
-          echo "Generating SonarQube token..."
-          TOKEN=$(curl -u admin:admin123 -X POST "http://localhost:9000/api/users/generate_token?name=github_token" | jq -r .token)
-          echo "Generated Token: $TOKEN"
+          TOKEN=$(curl -u admin:admin -X POST "http://localhost:9000/api/users/generate_token?name=github_action" | jq -r .token)
           echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
-          echo "SonarQube Token generated successfully."
-
-      - name: Create SonarQube Project
-        run: |
-          echo "Creating SonarQube project..."
-          curl -u admin:$SONAR_TOKEN -X POST "http://localhost:9000/api/projects/create?name=testcontainer-project&project=testcontainer-project"
-          echo "SonarQube project created successfully."
-
-      
-      - name: Check Source Files
-        run: |
-          echo "Checking source files..."
-          find Demo/src -name "*.java" || true
-          echo "Checking compiled classes..."
-          find Demo/build/classes -name "*.class" || true
+          echo "::add-mask::$TOKEN"
 
       - name: Build and Test
         run: |
@@ -78,50 +56,40 @@ jobs:
 
       - name: Run SonarQube Analysis
         env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
-          SONAR_PASSWORD: admin123
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
         run: |
-          cd Demo && ./gradlew sonar --stacktrace \
+          cd Demo && ./gradlew sonar \
             -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.projectKey=testcontainer-project \
+            -Dsonar.projectKey=demo-project \
             -Dsonar.login=$SONAR_TOKEN \
             --info
-            
 
       - name: Download SARIF Report
-        env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
-          SONAR_PASSWORD: admin123
         run: |
-          curl -u $SONAR_TOKEN: \
-          "http://localhost:9000/api/issues/search?componentKeys=testcontainer-project&resolved=false" \
-          -o sonar-report.sarif
+          curl -u admin:admin "http://localhost:9000/api/issues/search?componentKeys=demo-project&resolved=false" -o sonar-issues.sarif
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: sonar-report
-          path: sonar-report.sarif
-          if-no-files-found: warn  
+          name: sonar-sarif-report
+          path: sonar-issues.sarif
           retention-days: 30
+          if-no-files-found: warn
 
       - name: Upload Test Results
-        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: test-results
           path: Demo/build/reports/tests/
           retention-days: 7
 
-      - name: Upload Build artifacts
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: test-results
+          name: build-artifacts
           path: |
-            build/libs/*.jar
-            build/reports/
-            build/test-results/
+            Demo/build/libs/*.jar
+            Demo/build/reports/
+            Demo/build/test-results/
           retention-days: 30
           if-no-files-found: warn
