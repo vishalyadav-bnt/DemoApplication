@@ -70,7 +70,9 @@ jobs:
 
       - name: Download SonarQube Report
         run: |
-          docker exec sonarqube wget http://localhost:9000/api/ce/export -O sonar-report.pdf
+          TASK_ID=$(curl -u admin:admin -X POST "http://localhost:9000/api/ce/submit?projectKey=mycompany-demo-project" | jq -r '.task.id')
+          sleep 10  # Wait for analysis to complete
+          curl -v -u $SONAR_TOKEN  "http://localhost:9000/api/ce/download?id=$TASK_ID" -o sonar-report.sarif
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
