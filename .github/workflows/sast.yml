@@ -57,7 +57,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          cd Demo && ./gradlew sonarqube \
+          cd Demo && ./gradlew sonar \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=admin \
             -Dsonar.password=admin123 \
