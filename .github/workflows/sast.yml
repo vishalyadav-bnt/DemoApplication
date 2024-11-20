@@ -89,7 +89,7 @@ jobs:
       - name: Copy SARIF Report to Artifact Directory
         run: |
           mkdir -p sonar-reports
-          cp build/sonar/scanner-report/* sonar-reports/     
+          cp Demo/build/sonar/scanner-report/* sonar-reports/     
 
       - name: Debug SARIF File Path
         run: |
@@ -103,18 +103,26 @@ jobs:
             echo "SARIF file not found."
           fi
 
+
+      - name: Check for SARIF File
+      run: |
+        if [ -f build/sonar/scanner-report/sonar-report.sarif ]; then
+          echo "SARIF file found."
+        else
+          echo "SARIF file not found."
+        fi
           
-      - name: Generate Placeholder SARIF if Missing
-        run: |
-          if [ ! -f "build/reports/sonar-report.sarif" ]; then
-            mkdir -p build/reports/
-            echo '{
-              "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-              "version": "2.1.0",
-              "runs": []
-            }' > build/reports/sonar-report.sarif
-            echo "Generated placeholder SARIF file"
-          fi
+      # - name: Generate Placeholder SARIF if Missing
+      #   run: |
+      #     if [ ! -f "Demo/build/reports/sonar-report.sarif" ]; then
+      #       mkdir -p Demo/build/reports/
+      #       echo '{
+      #         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+      #         "version": "2.1.0",
+      #         "runs": []
+      #       }' > Demo/build/reports/sonar-report.sarif
+      #       echo "Generated placeholder SARIF file"
+      #     fi
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
