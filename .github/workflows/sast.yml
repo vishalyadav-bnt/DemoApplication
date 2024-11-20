@@ -49,6 +49,7 @@ jobs:
           TOKEN=$(curl -u admin:admin -X POST "http://localhost:9000/api/users/generate_token?name=github_action" | jq -r .token)
           echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "::add-mask::$TOKEN"
+          echo " $TOKEN "
 
       - name: Build and Test
         run: |
@@ -68,33 +69,31 @@ jobs:
       #   run: |
       #     curl -v -u admin:admin "http://localhost:9000/api/issues/list?componentKeys=mycompany-demo-project&resolved=false" -o sonar-issues.sarif
 
-      - name: Capture SonarQube Reports
-        run: |
-          mkdir -p sonar-reports
-          find Demo/build -name "*sonar*" -type f | xargs -I {} cp {} sonar-reports/
+
+      - name: Upload Test Results
+        uses: actions/download-artifact@v3
+        with:
+          name: test-results
+          path: sonar-reports/sonar-report.sarif
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: sonar-sarif-report
-          path: sonar-reports/
+          path: sonar-reports/sonar-report.sarif
           retention-days: 30
           if-no-files-found: warn
 
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: Demo/build/reports/tests/
-          retention-days: 7
+     
+         
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: |
-            Demo/build/libs/*.jar
-            Demo/build/reports/
-            Demo/build/test-results/
-          retention-days: 30
-          if-no-files-found: warn
+      # - name: Upload Build Artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: build-artifacts
+      #     path: |
+      #       Demo/build/libs/*.jar
+      #       Demo/build/reports/
+      #       Demo/build/test-results/
+      #     retention-days: 30
+      #     if-no-files-found: warn
