@@ -64,9 +64,13 @@ jobs:
             -Dsonar.login=$SONAR_TOKEN \
             --info
 
-      - name: Download SARIF Report
+      # - name: Download SARIF Report
+      #   run: |
+      #     curl -v -u admin:admin "http://localhost:9000/api/issues/list?componentKeys=mycompany-demo-project&resolved=false" -o sonar-issues.sarif
+
+      - name: Download SonarQube Report
         run: |
-          curl -v -u admin:admin "http://localhost:9000/api/issues/list?componentKeys=mycompany-demo-project&resolved=false" -o sonar-issues.sarif
+          docker exec sonarqube wget http://localhost:9000/api/ce/export -O sonar-report.pdf
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
