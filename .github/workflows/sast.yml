@@ -39,28 +39,24 @@ jobs:
         
       - name: Start SonarQube Container
         run: |
-          docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
           echo "Waiting for SonarQube to start..."
           timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           echo "SonarQube is ready"
-
       - name: Change Default SonarQube Password
         run: |
           # Wait for SonarQube to be fully up
           sleep 30
           curl -X POST -u admin:admin "http://localhost:9000/api/users/change_password?login=admin&previousPassword=admin&password=admin123"
-
       - name: Check Source Files
         run: |
           echo "Checking source files..."
           find Demo/src -name "*.java" || true
           echo "Checking compiled classes..."
           find Demo/build/classes -name "*.class" || true
-
       - name: Build and Test
         run: |
           cd Demo && ./gradlew clean build test --info
-
       - name: Ensure custom-reports directory exists
         run: |
           mkdir -p sonar-reports
@@ -85,12 +81,10 @@ jobs:
             -Dsonar.java.libraries=build/libs/*.jar \
             -Dsonar.sourceEncoding=UTF-8 \
             --info
-
       - name: Copy SARIF Report to Artifact Directory
         run: |
           mkdir -p sonar-reports
           cp Demo/build/sonar/scanner-report/* sonar-reports/     
-
       - name: Debug SARIF File Path
         run: |
           echo "Checking for SARIF file in the reports directory..."
@@ -102,7 +96,18 @@ jobs:
           else
             echo "SARIF file not found."
           fi
-
+          
+      # - name: Generate Placeholder SARIF if Missing
+      #   run: |
+      #     if [ ! -f "Demo/build/reports/sonar-report.sarif" ]; then
+      #       mkdir -p Demo/build/reports/
+      #       echo '{
+      #         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+      #         "version": "2.1.0",
+      #         "runs": []
+      #       }' > Demo/build/reports/sonar-report.sarif
+      #       echo "Generated placeholder SARIF file"
+      #     fi
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
@@ -118,3 +123,16 @@ jobs:
           name: test-results
           path: Demo/build/reports/tests/
           retention-days: 7
+
+      # - name: Publish SARIF Report to GitHub Packages
+      #   run: |
+      #     echo "Publishing SARIF Report to GitHub Packages"
+      #     echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      #     mkdir -p sarif-reports
+      #     cp Demo/build/reports/sonar-report.sarif ./sarif-reports/
+      #     ls -alh ./sarif-reports
+      #     REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+      #     REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+      #     IMAGE_TAG="ghcr.io/${REPO_OWNER}/${REPO_NAME}-dependency-check-report:latest"
+      #     docker build -t $IMAGE_TAG --build-arg SARIF_REPORT=./sarif-reports/sonar-report.sarif .
+      #     docker push $IMAGE_TAG
