@@ -68,17 +68,16 @@ jobs:
       #   run: |
       #     curl -v -u admin:admin "http://localhost:9000/api/issues/list?componentKeys=mycompany-demo-project&resolved=false" -o sonar-issues.sarif
 
-      - name: Download SonarQube Report
+      - name: Capture SonarQube Reports
         run: |
-          TASK_ID=$(curl -u admin:admin -X POST "http://localhost:9000/api/ce/submit?projectKey=mycompany-demo-project" | jq -r '.task.id')
-          sleep 10  # Wait for analysis to complete
-          curl -v -u $SONAR_TOKEN  "http://localhost:9000/api/ce/download?id=$TASK_ID" -o sonar-report.sarif
+          mkdir -p sonar-reports
+          find Demo/build -name "*sonar*" -type f | xargs -I {} cp {} sonar-reports/
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: sonar-sarif-report
-          path: sonar-issues.sarif
+          path: sonar-reports/
           retention-days: 30
           if-no-files-found: warn
 
