@@ -77,7 +77,7 @@ jobs:
             -Dsonar.projectKey=testcontainer-project \
             -Dsonar.login=admin \
             -Dsonar.password=admin123
-            --info
+            
 
       - name: Download SARIF Report
         env:
