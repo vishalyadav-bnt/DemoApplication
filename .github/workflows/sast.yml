@@ -37,32 +37,27 @@ jobs:
       - name: Make Gradle Wrapper Executable
         run: chmod +x Demo/gradlew
         
-      - name: Start SonarQube Container
+           - name: Start SonarQube Container
         run: |
           docker run -d --name sonarqube -p 9000:9000 sonarqube:community
-          echo "Waiting for SonarQube to start..."
-          timeout 500 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
-          docker logs sonarqube
-          echo "SonarQube is ready"
-
-      - name: Check if Password Change is Necessary
-        run: |
-          echo "Skipping password change as the API may not be available"
-          curl -X POST -u admin:admin "http://localhost:9000/account/reset_password?login=admin&previousPassword=admin&password=admin123" || echo "Password change failed"    
+          echo "Waiting for SonarQube to be ready..."
+          timeout 500 bash -c 'while [[ "$(curl -s localhost:9000/api/system/health | jq -r .status)" != "GREEN" ]]; do sleep 5; done' || exit 1
+          echo "SonarQube is ready."
 
       - name: Generate SonarQube Token
         run: |
           echo "Generating SonarQube token..."
-          TOKEN=$(curl -u admin:admin123 -X POST "http://localhost:9000/api/users/generate_token?name=github_token" | jq -r .token)
-          echo "Generated Token: $TOKEN"
+          TOKEN=$(curl -u admin:admin -X POST "http://localhost:9000/api/users/generate_token?name=github_token" | jq -r .token)
           echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "SonarQube Token generated successfully."
 
       - name: Create SonarQube Project
         run: |
           echo "Creating SonarQube project..."
-          curl -u admin:$SONAR_TOKEN -X POST "http://localhost:9000/api/projects/create?name=testcontainer-project&project=testcontainer-project"
-          echo "SonarQube project created successfully."
+          curl -u admin:$SONAR_TOKEN -X POST "http://localhost:9000/api/projects/create" \
+              -d "name=testcontainer-project" \
+              -d "project=testcontainer-project"
+          echo "SonarQube project created successfully.
 
       
       - name: Check Source Files
