@@ -71,6 +71,11 @@ jobs:
           mkdir -p sonar-reports
           curl -s -u admin:admin "http://localhost:9000/api/issues/search?componentKeys=demo-project&resolved=false" -o sonar-reports/sonar-report.json
 
+      - name: Print SonarQube Issues JSON
+        run: |
+          echo "Printing SonarQube Issues JSON:"
+          cat sonar-reports/sonar-report.json
+          
       - name: Convert SonarQube JSON Report to SARIF
         run: |
           jq -n \
