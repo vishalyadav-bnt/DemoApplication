@@ -75,7 +75,7 @@ jobs:
             -Dsonar.login=admin \
             -Dsonar.password=admin123 \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.working.directory=build/sonar
+            -Dsonar.working.directory=build/sonar \
             -Dsonar.sarif.enabled=true \
             -Dsonar.sarif.path=sonar-results.sarif
 
