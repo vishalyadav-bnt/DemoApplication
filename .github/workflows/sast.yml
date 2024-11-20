@@ -41,14 +41,20 @@ jobs:
         run: |
           docker run -d --name sonarqube -p 9000:9000 sonarqube:community
           echo "Waiting for SonarQube to start..."
-          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
+          timeout 500 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           docker logs sonarqube
           echo "SonarQube is ready"
+
+      - name: Check if Password Change is Necessary
+        run: |
+          echo "Skipping password change as the API may not be available"
+          curl -X POST -u admin:admin "http://localhost:9000/account/reset_password?login=admin&previousPassword=admin&password=admin123" || echo "Password change failed"    
 
       - name: Generate SonarQube Token
         run: |
           echo "Generating SonarQube token..."
-          TOKEN=$(curl -u admin:admin -X POST "http://localhost:9000/api/users/generate_token?name=github_token" | jq -r .token)
+          TOKEN=$(curl -u admin:admin123 -X POST "http://localhost:9000/api/users/generate_token?name=github_token" | jq -r .token)
+          echo "Generated Token: $TOKEN"
           echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "SonarQube Token generated successfully."
 
@@ -58,10 +64,6 @@ jobs:
           curl -u admin:$SONAR_TOKEN -X POST "http://localhost:9000/api/projects/create?name=testcontainer-project&project=testcontainer-project"
           echo "SonarQube project created successfully."
 
-      - name: Check if Password Change is Necessary
-        run: |
-          echo "Skipping password change as the API may not be available"
-          curl -X POST -u admin:admin "http://localhost:9000/account/reset_password?login=admin&previousPassword=admin&password=admin123" || echo "Password change failed"
       
       - name: Check Source Files
         run: |
@@ -94,7 +96,7 @@ jobs:
           SONAR_PASSWORD: admin123
         run: |
           curl -u $SONAR_TOKEN: \
-          "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false" \
+          "http://localhost:9000/api/issues/search?componentKeys=testcontainer-project&resolved=false" \
           -o sonar-report.sarif
 
       - name: Upload SARIF File as Artifact
