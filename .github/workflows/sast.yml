@@ -41,7 +41,7 @@ jobs:
         run: |
           docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
           echo "Waiting for SonarQube to start..."
-          timeout 600 bash -c 'while [[ "$(curl -s localhost:9000/api/system/status | jq -r .status)" != "RUNNING" ]]; do sleep 5; done' || false
+          timeout 1200 bash -c 'while [[ "$(curl -s localhost:9000/api/system/status | jq -r .status)" != "RUNNING" ]]; do sleep 5; done' || false
           echo "SonarQube is ready"
 
       - name: Generate SonarQube Token
