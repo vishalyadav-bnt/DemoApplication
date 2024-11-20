@@ -102,15 +102,6 @@ jobs:
           else
             echo "SARIF file not found."
           fi
-
-
-      - name: Check for SARIF File
-      run: |
-        if [ -f build/sonar/scanner-report/sonar-report.sarif ]; then
-          echo "SARIF file found."
-        else
-          echo "SARIF file not found."
-        fi
           
       # - name: Generate Placeholder SARIF if Missing
       #   run: |
