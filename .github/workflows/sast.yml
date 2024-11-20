@@ -39,67 +39,107 @@ jobs:
         
       - name: Start SonarQube Container
         run: |
-          docker run -d --name sonarqube \
-            -e SONAR_JAVA_OPTS="-Xmx2048m -Xms1024m" \
-            -p 9000:9000 sonarqube:lts
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
           echo "Waiting for SonarQube to start..."
           timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           echo "SonarQube is ready"
 
       - name: Change Default SonarQube Password
         run: |
+          # Wait for SonarQube to be fully up
           sleep 30
           curl -X POST -u admin:admin "http://localhost:9000/api/users/change_password?login=admin&previousPassword=admin&password=admin123"
-          
-      # Debug step to verify SonarQube is running
-      - name: Check SonarQube Status
-        run: |
-          curl -v http://localhost:9000/api/system/status
-          curl -u admin:admin123 http://localhost:9000/api/server/version
 
-      - name: Build and Test with Debug Output
+      - name: Check Source Files
         run: |
-          cd Demo
-          ./gradlew clean test jacocoTestReport --debug
-          
-          echo "Checking build directory structure:"
-          ls -R build/
-          
-          echo "Checking JaCoCo report:"
-          ls -la build/reports/jacoco/test/ || true
+          echo "Checking source files..."
+          find Demo/src -name "*.java" || true
+          echo "Checking compiled classes..."
+          find Demo/build/classes -name "*.class" || true
 
-      - name: Run SonarQube Analysis with Debug
+      - name: Build and Test
+        run: |
+          cd Demo && ./gradlew clean build test --info
+
+      - name: Ensure custom-reports directory exists
+        run: |
+          mkdir -p sonar-reports
+    
+
+      - name: Run SonarQube Analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          cd Demo
-          ./gradlew sonarqube --debug \
-            -Dsonar.verbose=true \
+          cd Demo && ./gradlew sonar \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=admin \
-            -Dsonar.password=admin123
+            -Dsonar.password=admin123 \
+            -Dsonar.verbose=true \
+            -Dsonar.sarif.enabled=true \
+            -Dsonar.sarif.reportPaths=build/sonar/scanner-report/sonar-report.sarif \
+            -Dsonar.projectKey=testcontainer-project \
+            -Dsonar.java.binaries=build/classes/java/main \
+            -Dsonar.java.test.binaries=build/classes/java/test \
+            -Dsonar.sources=src/main/java \
+            -Dsonar.tests=src/test/java \
+            -Dsonar.java.libraries=build/libs/*.jar \
+            -Dsonar.sourceEncoding=UTF-8 \
+            --info
 
-      - name: Check SonarQube Task Status
-        if: always()
+      - name: Copy SARIF Report to Artifact Directory
         run: |
-          cd Demo
-          TASK_ID=$(curl -u admin:admin123 "http://localhost:9000/api/ce/activity?component=testcontainer-project" | jq -r '.tasks[0].id')
-          echo "Latest task ID: $TASK_ID"
-          
-          if [ ! -z "$TASK_ID" ]; then
-            echo "Task details:"
-            curl -u admin:admin123 "http://localhost:9000/api/ce/task?id=$TASK_ID" | jq '.'
-          fi
-          
-          echo "SonarQube logs:"
-          docker logs sonarqube
+          mkdir -p sonar-reports
+          cp Demo/build/sonar/scanner-report/* sonar-reports/     
 
-      - name: Upload Build Reports
+      - name: Debug SARIF File Path
+        run: |
+          echo "Checking for SARIF file in the reports directory..."
+          ls -R sonar-reports || true
+          echo "Checking if the SARIF file exists..."
+          if [ -f sonar-reports/sonar-report.sarif ]; then
+            echo "SARIF file found, displaying contents..."
+            cat sonar-reports/sonar-report.sarif
+          else
+            echo "SARIF file not found."
+          fi
+
+          
+      # - name: Generate Placeholder SARIF if Missing
+      #   run: |
+      #     if [ ! -f "Demo/build/reports/sonar-report.sarif" ]; then
+      #       mkdir -p Demo/build/reports/
+      #       echo '{
+      #         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+      #         "version": "2.1.0",
+      #         "runs": []
+      #       }' > Demo/build/reports/sonar-report.sarif
+      #       echo "Generated placeholder SARIF file"
+      #     fi
+
+      - name: Upload SARIF File as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: sonar-report
+          path: sonar-reports/
+          retention-days: 30
+
+      - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: build-reports
-          path: |
-            Demo/build/reports/
-            Demo/build/test-results/
+          name: test-results
+          path: Demo/build/reports/tests/
           retention-days: 7
+
+      # - name: Publish SARIF Report to GitHub Packages
+      #   run: |
+      #     echo "Publishing SARIF Report to GitHub Packages"
+      #     echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      #     mkdir -p sarif-reports
+      #     cp Demo/build/reports/sonar-report.sarif ./sarif-reports/
+      #     ls -alh ./sarif-reports
+      #     REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+      #     REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+      #     IMAGE_TAG="ghcr.io/${REPO_OWNER}/${REPO_NAME}-dependency-check-report:latest"
+      #     docker build -t $IMAGE_TAG --build-arg SARIF_REPORT=./sarif-reports/sonar-report.sarif .
+      #     docker push $IMAGE_TAG
