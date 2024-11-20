@@ -75,6 +75,7 @@ jobs:
             -Dsonar.login=admin \
             -Dsonar.password=admin123 \
             -Dsonar.qualitygate.wait=true \
+            -Dsonar.working.directory=build/sonar
             -Dsonar.sarif.enabled=true \
             -Dsonar.sarif.path=sonar-results.sarif
 
@@ -111,8 +112,12 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: .scannerwork/sonar-results.sarif
+          path: |
+            build/sonar/sonar-results.sarif
+            .scannerwork/sonar-results.sarif
+          if-no-files-found: warn  
           retention-days: 30
+
 
       - name: Upload Test Results
         if: always()
@@ -121,6 +126,17 @@ jobs:
           name: test-results
           path: Demo/build/reports/tests/
           retention-days: 7
+
+      - name: Upload Build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            build/libs/*.jar
+            build/reports/
+            build/test-results/
+          retention-days: 30
+          if-no-files-found: warn
 
       # - name: Publish SARIF Report to GitHub Packages
       #   run: |
