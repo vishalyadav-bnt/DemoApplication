@@ -74,34 +74,26 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=admin \
             -Dsonar.password=admin123 \
-            -Dsonar.verbose=true \
+            -Dsonar.qualitygate.wait=true \
             -Dsonar.sarif.enabled=true \
-            -Dsonar.sarif.reportPaths=build/sonar/scanner-report/sonar-report.sarif \
-            -Dsonar.projectKey=testcontainer-project \
-            -Dsonar.java.binaries=build/classes/java/main \
-            -Dsonar.java.test.binaries=build/classes/java/test \
-            -Dsonar.sources=src/main/java \
-            -Dsonar.tests=src/test/java \
-            -Dsonar.java.libraries=build/libs/*.jar \
-            -Dsonar.sourceEncoding=UTF-8 \
-            --info
+            -Dsonar.sarif.path=sonar-results.sarif
 
-      - name: Copy SARIF Report to Artifact Directory
-        run: |
-          mkdir -p sonar-reports
-          cp Demo/build/sonar/scanner-report/* sonar-reports/     
+      # - name: Copy SARIF Report to Artifact Directory
+      #   run: |
+      #     mkdir -p sonar-reports
+      #     cp Demo/build/sonar/scanner-report/* sonar-reports/     
 
-      - name: Debug SARIF File Path
-        run: |
-          echo "Checking for SARIF file in the reports directory..."
-          ls -R sonar-reports || true
-          echo "Checking if the SARIF file exists..."
-          if [ -f sonar-reports/sonar-report.sarif ]; then
-            echo "SARIF file found, displaying contents..."
-            cat sonar-reports/sonar-report.sarif
-          else
-            echo "SARIF file not found."
-          fi
+      # - name: Debug SARIF File Path
+      #   run: |
+      #     echo "Checking for SARIF file in the reports directory..."
+      #     ls -R sonar-reports || true
+      #     echo "Checking if the SARIF file exists..."
+      #     if [ -f sonar-reports/sonar-report.sarif ]; then
+      #       echo "SARIF file found, displaying contents..."
+      #       cat sonar-reports/sonar-report.sarif
+      #     else
+      #       echo "SARIF file not found."
+      #     fi
           
       # - name: Generate Placeholder SARIF if Missing
       #   run: |
@@ -119,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: sonar-reports/
+          path: .scannerwork/sonar-results.sarif
           retention-days: 30
 
       - name: Upload Test Results
