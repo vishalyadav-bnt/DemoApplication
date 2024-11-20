@@ -39,7 +39,7 @@ jobs:
         
       - name: Start SonarQube Container
         run: |
-          docker run -d --name sonarqube -p 9000:9000 sonarqube:10.7.0.96327
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:10
           echo "Waiting for SonarQube to start..."
           timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           echo "SonarQube is ready"
