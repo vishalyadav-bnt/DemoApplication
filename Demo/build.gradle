@@ -33,7 +33,7 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-sonarqube {
+sonar {
     properties {
         property "sonar.projectKey", "testcontainer-project"
         property "sonar.host.url", "http://localhost:9000"

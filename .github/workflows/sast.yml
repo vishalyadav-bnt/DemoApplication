@@ -73,7 +73,7 @@ jobs:
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
-          cd Demo && ./gradlew sonarqube --stacktrace \
+          cd Demo && ./gradlew sonar --stacktrace \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.projectKey=testcontainer-project \
             -Dsonar.login=admin \
