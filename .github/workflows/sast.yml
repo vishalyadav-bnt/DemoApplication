@@ -76,7 +76,8 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.projectKey=testcontainer-project \
             -Dsonar.login=admin \
-            -Dsonar.password=admin123
+            -Dsonar.password=admin123 \
+            --info
             
 
       - name: Download SARIF Report
@@ -85,7 +86,7 @@ jobs:
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
-          curl -u "${{ secrets.SONAR_USERNAME }}:${{ secrets.SONAR_PASSWORD }}" \
+          curl -v -u "${{ secrets.SONAR_USERNAME }}:${{ secrets.SONAR_PASSWORD }}" \
           "${{ secrets.SONAR_HOST_URL }}/api/sarif/download?projectKey=testcontainer-project" \
           -o sonar-report.sarif
 
