@@ -45,11 +45,23 @@ jobs:
           docker logs sonarqube
           echo "SonarQube is ready"
 
+      - name: Generate SonarQube Token
+        run: |
+          echo "Generating SonarQube token..."
+          TOKEN=$(curl -u admin:admin -X POST "http://localhost:9000/api/users/generate_token?name=github_token" | jq -r .token)
+          echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "SonarQube Token generated successfully."
+
+      - name: Create SonarQube Project
+        run: |
+          echo "Creating SonarQube project..."
+          curl -u admin:$SONAR_TOKEN -X POST "http://localhost:9000/api/projects/create?name=testcontainer-project&project=testcontainer-project"
+          echo "SonarQube project created successfully."
+
       - name: Check if Password Change is Necessary
         run: |
           echo "Skipping password change as the API may not be available"
-          # Alternatively, run a check for the endpoint here to see if it's responding
-          # curl -X POST -u admin:admin "http://localhost:9000/api/users/change_password?login=admin&previousPassword=admin&password=admin123" || echo "Password change failed"
+          curl -X POST -u admin:admin "http://localhost:9000/account/reset_password?login=admin&previousPassword=admin&password=admin123" || echo "Password change failed"
       
       - name: Check Source Files
         run: |
@@ -62,22 +74,16 @@ jobs:
         run: |
           cd Demo && ./gradlew clean build test --info
 
-      # - name: Ensure custom-reports directory exists
-      #   run: |
-      #     mkdir -p sonar-reports
-    
-
       - name: Run SonarQube Analysis
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
-          SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
+          SONAR_PASSWORD: admin123
         run: |
           cd Demo && ./gradlew sonar --stacktrace \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.projectKey=testcontainer-project \
-            -Dsonar.login=admin \
-            -Dsonar.password=admin \
+            -Dsonar.login=$SONAR_TOKEN \
             --info
             
 
@@ -85,47 +91,11 @@ jobs:
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
-          SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
+          SONAR_PASSWORD:admin123
         run: |
-          curl -v -u "admin:admin" \
+          curl -v -u "admin:admin123" \
           "http://localhost:9000/api/sarif/download?projectKey=testcontainer-project" \
           -o sonar-report.sarif
-
-
-
-      # - name: Copy SARIF Report to Artifact Directory
-      #   run: |
-      #     mkdir -p sonar-reports
-      #     cp Demo/build/sonar/scanner-report/* sonar-reports/     
-
-      # - name: Debug SARIF File Path
-      #   run: |
-      #     echo "Checking for SARIF file in the reports directory..."
-      #     ls -R sonar-reports || true
-      #     echo "Checking if the SARIF file exists..."
-      #     if [ -f sonar-reports/sonar-report.sarif ]; then
-      #       echo "SARIF file found, displaying contents..."
-      #       cat sonar-reports/sonar-report.sarif
-      #     else
-      #       echo "SARIF file not found."
-      #     fi
-          
-      # - name: Generate Placeholder SARIF if Missing
-      #   run: |
-      #     if [ ! -f "Demo/build/reports/sonar-report.sarif" ]; then
-      #       mkdir -p Demo/build/reports/
-      #       echo '{
-      #         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-      #         "version": "2.1.0",
-      #         "runs": []
-      #       }' > Demo/build/reports/sonar-report.sarif
-      #       echo "Generated placeholder SARIF file"
-      #     fi
-
-      # - name: Convert Sonar Report to SARIF
-      #   run: |
-      #     curl -L -o sonar2sarif.jar https://github.com/Microsoft/sonar-sarif/releases/download/2.1.0/sonar2sarif.jar
-      #     java -jar sonar2sarif.jar -i sonar-report.json -o results.sarif
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
@@ -134,7 +104,6 @@ jobs:
           path: sonar-report.sarif
           if-no-files-found: warn  
           retention-days: 30
-
 
       - name: Upload Test Results
         if: always()
@@ -154,16 +123,3 @@ jobs:
             build/test-results/
           retention-days: 30
           if-no-files-found: warn
-
-      # - name: Publish SARIF Report to GitHub Packages
-      #   run: |
-      #     echo "Publishing SARIF Report to GitHub Packages"
-      #     echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      #     mkdir -p sarif-reports
-      #     cp Demo/build/reports/sonar-report.sarif ./sarif-reports/
-      #     ls -alh ./sarif-reports
-      #     REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-      #     REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-      #     IMAGE_TAG="ghcr.io/${REPO_OWNER}/${REPO_NAME}-dependency-check-report:latest"
-      #     docker build -t $IMAGE_TAG --build-arg SARIF_REPORT=./sarif-reports/sonar-report.sarif .
-      #     docker push $IMAGE_TAG

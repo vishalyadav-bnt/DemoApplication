@@ -2,7 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.5'
 	id 'io.spring.dependency-management' version '1.1.6'
-	id "org.sonarqube" version "5.1.0.4882"     //'10.7.0.96327'
+	id "org.sonarqube" version "6.0.0.5145"    
    
 }
 
@@ -33,30 +33,31 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-sonar {
-    properties {
-        property "sonar.projectKey", "testcontainer-project"
-        property "sonar.host.url", "http://localhost:9000"
-        property "sonar.login", "admin"
-        property "sonar.password", "admin"
-        property "sonar.sarif.enabled", "true"
-        property 'sonar.projectVersion', '1.0'
-        property "sonar.sarif.reportPaths", "build/sonar/scanner-report/sonar-report.sarif"
-        property 'sonar.sources', 'src/main/java'
-        property 'sonar.tests', 'src/test/java'
-        property 'sonar.language', 'java'
-        property 'sonar.sourceEncoding', 'UTF-8'
-        property 'sonar.exclusions', '**/test/**, **/generated/**' 
-    }
-}
+// sonar {
+//     properties {
+//         property "sonar.projectKey", "Demo"
+//         property "sonar.host.url", "http://localhost:9000"
+//          property "sonar.login","sqp_6f00b27f2c543253ed08b99870d8177961bcfcdd"
+//         // property "sonar.login", "admin"
+//         // property "sonar.password", "admin"
+//         property "sonar.sarif.enabled", "true"
+//         property 'sonar.projectVersion', '1.0'
+//         property "sonar.sarif.reportPaths", "build/sonar/scanner-report/sonar-report.sarif"
+//         property 'sonar.sources', 'src/main/java'
+//         property 'sonar.tests', 'src/test/java'
+//         property 'sonar.language', 'java'
+//         property 'sonar.sourceEncoding', 'UTF-8'
+//         property 'sonar.exclusions', '**/test/**, **/generated/**' 
+//     }
+// }
 
 
-tasks.withType(JacocoReport) {
-    reports {
-        xml.enabled true
-        html.enabled true
-        sarif.enabled true
-        sarif.destination file("${buildDir}/reports/jacoco/jacocoTestReport.sarif")
-    }
-}
+// tasks.withType(JacocoReport) {
+//     reports {
+//         xml.enabled true
+//         html.enabled true
+//         sarif.enabled true
+//         sarif.destination file("${buildDir}/reports/jacoco/jacocoTestReport.sarif")
+//     }
+// }
 
