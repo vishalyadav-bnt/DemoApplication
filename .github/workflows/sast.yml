@@ -41,7 +41,7 @@ jobs:
         run: |
           docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
           echo "Waiting for SonarQube to start..."
-          timeout 600 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
+          timeout 900 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           docker logs sonarqube
           echo "SonarQube is ready"
 
@@ -69,15 +69,26 @@ jobs:
 
       - name: Fetch SonarQube Issues (SARIF Conversion)
         run: |
-          # Check if SonarQube API is accessible
-          echo "Checking SonarQube API status..."
-          curl -s localhost:9000/api/system/status
+          max_retries=5
+          retries=0
+          success=false
+          
+          while [ $retries -lt $max_retries ]; do
+            response=$(curl -s -u admin:admin "http://localhost:9000/api/issues/search?componentKeys=demo-project&resolved=false")
+            if [[ $response == *"issues"* ]]; then
+              success=true
+              break
+            fi
+            retries=$((retries+1))
+            sleep 10
+          done
 
-          # Fetch issues
-          mkdir -p sonar-reports
-          curl -s -u admin:admin "http://localhost:9000/api/issues/search?componentKeys=demo-project&resolved=false" -o sonar-reports/sonar-report.json
-          echo "Printing SonarQube Issues JSON:"
-          cat sonar-reports/sonar-report.json
+          if [ "$success" = true ]; then
+            echo "SonarQube API responded successfully!"
+          else
+            echo "Failed to fetch issues after $max_retries attempts."
+            exit 1
+          fi
 
       - name: Convert SonarQube JSON Report to SARIF
         run: |
@@ -87,7 +98,7 @@ jobs:
             --argjson report "$(cat sonar-reports/sonar-report.json)" \
             '{
               "version": $version,
-              "runs": [{
+              "runs": [ {
                 "tool": {
                   "driver": {
                     "name": $title,
@@ -95,7 +106,7 @@ jobs:
                   }
                 },
                 "results": $report.issues
-              }]
+              } ]
             }' > sonar-reports/sonar-report.sarif
 
       - name: Upload SARIF File as Artifact
