@@ -36,7 +36,7 @@ jobs:
 
       - name: Make Gradle Wrapper Executable
         run: chmod +x Demo/gradlew
-        
+
       - name: Start SonarQube Container
         run: |
           docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
@@ -63,18 +63,28 @@ jobs:
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.projectKey=demo-project \
             -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.report.export.path=sonar-reports/sonar-report.json \
             --info
 
-      # - name: Download SARIF Report
-      #   run: |
-      #     curl -v -u admin:admin "http://localhost:9000/api/issues/list?componentKeys=mycompany-demo-project&resolved=false" -o sonar-issues.sarif
-
-
-      - name: Upload Test Results
-        uses: actions/download-artifact@v3.0.2
-        with:
-          name: test-results
-          path: sonar-reports/sonar-report.sarif
+      - name: Convert SonarQube Report to SARIF
+        run: |
+          mkdir -p sonar-reports
+          jq -n \
+            --arg version "2.1.0" \
+            --arg title "SonarQube Analysis" \
+            --argjson report "$(cat sonar-reports/sonar-report.json)" \
+            '{
+              "version": $version,
+              "runs": [{
+                "tool": {
+                  "driver": {
+                    "name": $title,
+                    "informationUri": "http://localhost:9000"
+                  }
+                },
+                "results": $report.issues
+              }]
+            }' > sonar-reports/sonar-report.sarif
 
       - name: Upload SARIF File as Artifact
         uses: actions/upload-artifact@v3
@@ -84,16 +94,13 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-     
-         
-
-      # - name: Upload Build Artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: build-artifacts
-      #     path: |
-      #       Demo/build/libs/*.jar
-      #       Demo/build/reports/
-      #       Demo/build/test-results/
-      #     retention-days: 30
-      #     if-no-files-found: warn
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            Demo/build/libs/*.jar
+            Demo/build/reports/
+            Demo/build/test-results/
+          retention-days: 30
+          if-no-files-found: warn
