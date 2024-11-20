@@ -54,13 +54,24 @@ jobs:
           find Demo/src -name "*.java" || true
           echo "Checking compiled classes..."
           find Demo/build/classes -name "*.class" || true
+
       - name: Build and Test
         run: |
           cd Demo && ./gradlew clean build test --info
+
       - name: Ensure custom-reports directory exists
         run: |
           mkdir -p sonar-reports
     
+      - name: Create SARIF output directory
+        run: mkdir -p Demo/build/reports/
+
+      # Configure SonarQube for SARIF generation
+      - name: Configure SonarQube SARIF settings
+        run: |
+          cd Demo
+          echo "sonar.sarif.path=build/reports/sonar-report.sarif" >> sonar-project.properties
+          echo "sonar.analysis.report.sarif=true" >> sonar-project.properties
 
       - name: Run SonarQube Analysis
         env:
@@ -81,10 +92,23 @@ jobs:
             -Dsonar.java.libraries=build/libs/*.jar \
             -Dsonar.sourceEncoding=UTF-8 \
             --info
-      - name: Copy SARIF Report to Artifact Directory
+
+      - name: Wait for SARIF generation
+        run: |
+          cd Demo
+          timeout 60 bash -c 'until [ -f build/reports/sonar-report.sarif ]; do sleep 5; done' || echo "Timeout waiting for SARIF file"
+                
+
+      - name: Copy SARIF to artifact location
         run: |
           mkdir -p sonar-reports
-          cp Demo/build/sonar/scanner-report/* sonar-reports/     
+          if [ -f Demo/build/reports/sonar-report.sarif ]; then
+            cp Demo/build/reports/sonar-report.sarif sonar-reports/
+          else
+            echo "SARIF file not found at expected location"
+            exit 1
+          fi
+
       - name: Debug SARIF File Path
         run: |
           echo "Checking for SARIF file in the reports directory..."
