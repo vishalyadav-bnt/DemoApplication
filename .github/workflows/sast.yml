@@ -91,7 +91,7 @@ jobs:
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_USERNAME: ${{ secrets.SONAR_USERNAME }}
-          SONAR_PASSWORD:admin123
+          SONAR_PASSWORD: admin123
         run: |
           curl -v -u "admin:admin123" \
           "http://localhost:9000/api/sarif/download?projectKey=testcontainer-project" \
