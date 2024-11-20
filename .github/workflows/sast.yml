@@ -86,8 +86,9 @@ jobs:
           SONAR_PASSWORD: ${{ secrets.SONAR_PASSWORD }}
         run: |
           curl -u "${{ secrets.SONAR_USERNAME }}:${{ secrets.SONAR_PASSWORD }}" \
-            "${{ secrets.SONAR_HOST_URL }}/api/sarif/download?projectKey=testcontainer-project" \
-            -o sonar-report.sarif'
+          "${{ secrets.SONAR_HOST_URL }}/api/sarif/download?projectKey=testcontainer-project" \
+          -o sonar-report.sarif
+
 
       # - name: Copy SARIF Report to Artifact Directory
       #   run: |
