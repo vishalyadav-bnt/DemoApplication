@@ -68,31 +68,26 @@ jobs:
             -Dsonar.analysis.mode=publish \
             --info
 
-      - name: Fetch SonarQube Issues (SARIF Conversion)
+      - name: Check if SonarQube Report Exists
         run: |
-          max_retries=5
-          retries=0
-          success=false
-          
-          while [ $retries -lt $max_retries ]; do
-            response=$(curl -s -u admin:admin "http://localhost:9000/api/issues/search?componentKeys=demo-project&resolved=false")
-            if [[ $response == *"issues"* ]]; then
-              success=true
-              break
-            fi
-            retries=$((retries+1))
-            sleep 10
-          done
-
-          if [ "$success" = true ]; then
-            echo "SonarQube API responded successfully!"
+          if [ ! -f sonar-reports/sonar-report.json ]; then
+            echo "SonarQube report not found!"
+            exit 1
           else
-            echo "Failed to fetch issues after $max_retries attempts."
+            echo "SonarQube report found!"
+          fi
+
+      - name: Create sonar-reports Directory if it Doesn't Exist
+        run: |
+          mkdir -p sonar-reports
+          
+      - name: Convert SonarQube JSON Report to SARIF
+        run: |
+          if [ ! -f sonar-reports/sonar-report.json ]; then
+            echo "SonarQube report not found at sonar-reports/sonar-report.json"
             exit 1
           fi
 
-      - name: Convert SonarQube JSON Report to SARIF
-        run: |
           jq -n \
             --arg version "2.1.0" \
             --arg title "SonarQube Analysis" \
