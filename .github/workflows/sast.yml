@@ -37,7 +37,7 @@ jobs:
       - name: Make Gradle Wrapper Executable
         run: chmod +x Demo/gradlew
         
-           - name: Start SonarQube Container
+      - name: Start SonarQube Container
         run: |
           docker run -d --name sonarqube -p 9000:9000 sonarqube:community
           echo "Waiting for SonarQube to be ready..."
