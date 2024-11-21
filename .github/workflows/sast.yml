@@ -48,13 +48,13 @@ jobs:
       - name: Change Admin Password
         run: |
           curl -X POST -u admin:admin \
-            "http://localhost:9000/api/users/change_password?login=admin&password=admin123&previousPassword=admin"
+            "http://localhost:9000/api/users/change_password?login=admin?password=admin123?previousPassword=admin"
 
 
       - name: Create Project Key
         run: |
           curl -X POST -u admin:admin123 \
-            "http://localhost:9000/api/projects/create?project=Demo&name=Demo"
+            "http://localhost:9000/api/projects/create?project=Demo?name=Demo"
 
       - name: Build and Test
         run: |
@@ -71,7 +71,7 @@ jobs:
       - name: Generate SARIF Report
         run: |
           curl -u admin:new_password \
-            "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false" \
+            "http://localhost:9000/api/issues/search?componentKeys=Demo?resolved=false" \
             -o issues.json
 
       - name: Upload SARIF Report as Artifact
