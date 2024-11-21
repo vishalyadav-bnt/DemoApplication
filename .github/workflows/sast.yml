@@ -24,35 +24,50 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: 'temurin'
           cache: gradle
+
       - name: Make Gradle Wrapper Executable
         run: chmod +x Demo/gradlew
+
       - name: Start SonarQube Container
         run: |
-          docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:lts-community
           echo "Waiting for SonarQube to start..."
-          timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
+          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           docker logs sonarqube
           echo "SonarQube is ready"
 
-      - name: Change Admin Password
+      - name: Initialize SonarQube Setup
         run: |
-          curl -v -f -X POST -u admin:admin \
-            "http://localhost:9000/api/users/change_password?login=admin&password=admin123&previousPassword=admin"
+          # Wait for SonarQube to fully initialize
+          sleep 30
+          
+          # Attempt to change password using newer method
+          docker exec sonarqube wget -q --method=POST "http://localhost:9000/api/users/change_password?login=admin&previousPassword=admin&password=admin123" \
+            || echo "Password change may have failed"
+
+          # Try alternative methods if needed
+          curl -f -X POST -u admin:admin "http://localhost:9000/api/users/change_password" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "login=admin&previousPassword=admin&password=admin123" \
+            || echo "Alternative password change method failed"
 
       - name: Create Project Key
         run: |
-          curl -v -f -X POST -u admin:admin \
-            "http://localhost:9000/api/projects/create?project=Demo&name=Demo"
+          curl -f -X POST -u admin:admin123 \
+            "http://localhost:9000/api/projects/create?project=Demo&name=Demo" \
+            || echo "Project creation may have failed"
 
       - name: Build and Test
         run: |
           cd Demo && ./gradlew clean build test --info  
+
       - name: Run Sonar Analysis with Gradle
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,13 +75,13 @@ jobs:
           cd Demo && ./gradlew sonar \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=admin \
-            -Dsonar.password=admin \
+            -Dsonar.password=admin123 \
             -Dsonar.projectKey=Demo \
             -Dsonar.qualitygate.wait=true
 
       - name: Export SonarQube Issues
         run: |
-          curl -v -f -u admin:admin \
+          curl -f -u admin:admin123 \
             "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false&ps=500" \
             -o sonar-issues.json
  
