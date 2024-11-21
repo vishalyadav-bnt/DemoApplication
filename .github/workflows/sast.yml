@@ -39,14 +39,17 @@ jobs:
           timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           docker logs sonarqube
           echo "SonarQube is ready"
-      - name: Change Admin Password
-        run: |
-          curl -f -X POST -u admin:admin \
-            "http://localhost:9000/api/users/change_password?login=admin&password=admin123&previousPassword=admin"
+
+      # - name: Change Admin Password
+      #   run: |
+      #     curl -f -X POST -u admin:admin \
+      #       "http://localhost:9000/api/users/change_password?login=admin&password=admin123&previousPassword=admin"
+
       - name: Create Project Key
         run: |
           curl -f -X POST -u admin:admin123 \
             "http://localhost:9000/api/projects/create?project=Demo&name=Demo"
+
       - name: Build and Test
         run: |
           cd Demo && ./gradlew clean build test --info  
@@ -57,12 +60,13 @@ jobs:
           cd Demo && ./gradlew sonar \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=admin \
-            -Dsonar.password=admin123 \
+            -Dsonar.password=admin \
             -Dsonar.projectKey=Demo \
             -Dsonar.qualitygate.wait=true
+
       - name: Export SonarQube Issues
         run: |
-          curl -f -u admin:admin123 \
+          curl -f -u admin:admin \
             "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false&ps=500" \
             -o sonar-issues.json
  
