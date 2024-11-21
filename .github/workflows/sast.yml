@@ -152,14 +152,14 @@ jobs:
               with open(output_file, 'w') as f:
                   json.dump(sarif_template, f, indent=2)
  
-          convert_to_sarif('sonar-issues.sarif', 'sonar-issues.sarif')
+          convert_to_sarif('sonar-issues.json', 'sonar-issues.sarif')
           EOF
  
       - name: Upload JSON Issues
         uses: actions/upload-artifact@v4
         with:
-          name: sonar-issues-sarif
-          path: sonar-issues.sarif
+          name: sonar-issues-json
+          path: sonar-issues.json
  
       - name: Upload SARIF Report
         uses: actions/upload-artifact@v4
