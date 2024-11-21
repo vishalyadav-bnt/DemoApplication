@@ -1,5 +1,5 @@
 name: SonarQube SAST Workflow with TestContainers
- 
+
 on:
   push:
     branches:
@@ -7,14 +7,14 @@ on:
   pull_request:
     branches:
       - main
- 
+
 permissions:
   contents: read
   security-events: write
   actions: read
   issues: write
   pull-requests: write
- 
+
 jobs:
   sonarqube-scan:
     name: Run SonarQube Analysis with TestContainers
@@ -84,87 +84,47 @@ jobs:
           curl -f -u admin:admin123 \
             "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false&ps=500" \
             -o sonar-issues.json
- 
-      - name: Convert SonarQube Issues to SARIF
+
+      - name: Convert SonarQube Issues to SARIF using Shell Script
         run: |
-          python3 - << EOF
-          import json
-          import uuid
- 
-          def convert_to_sarif(input_file, output_file):
-              with open(input_file, 'r') as f:
-                  sonar_data = json.load(f)
- 
-              sarif_template = {
-                  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-                  "version": "2.1.0",
-                  "runs": [{
-                      "tool": {
-                          "driver": {
-                              "name": "SonarQube",
-                              "rules": [],
-                              "version": "1.0.0"
-                          }
-                      },
-                      "results": []
-                  }]
-              }
- 
-              # Collect unique rules and map issues
-              rule_map = {}
-              results = []
- 
-              for issue in sonar_data.get('issues', []):
-                  # Create unique rule ID
-                  rule_key = issue.get('rule', '')
-                  if rule_key not in rule_map:
-                      rule_map[rule_key] = {
-                          "id": rule_key,
-                          "shortDescription": {"text": issue.get('message', '')},
-                          "fullDescription": {"text": issue.get('message', '')},
-                          "defaultSeverity": issue.get('severity', 'info').lower()
-                      }
- 
-                  # Create result entry
-                  result = {
-                      "ruleId": rule_key,
-                      "message": {"text": issue.get('message', '')},
-                      "locations": [{
-                          "physicalLocation": {
-                              "artifactLocation": {
-                                  "uri": issue.get('component', '').replace('Demo:', '')
-                              },
-                              "region": {
-                                  "startLine": issue.get('line', 1)
-                              }
-                          }
-                      }],
-                      "partialFingerprints": {
-                          "primaryLocationLineHash": str(uuid.uuid5(uuid.NAMESPACE_DNS, str(issue)))
-                      }
+          echo "Converting SonarQube issues to SARIF format..."
+          jq -r '{
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [{
+              "tool": {
+                "driver": {
+                  "name": "SonarQube",
+                  "rules": [],
+                  "version": "1.0.0"
+                }
+              },
+              "results": [
+                (.issues[] | {
+                  "ruleId": .rule,
+                  "message": { "text": .message },
+                  "locations": [{
+                    "physicalLocation": {
+                      "artifactLocation": { "uri": (.component | sub("Demo:"; "")) },
+                      "region": { "startLine": .line }
+                    }
+                  }],
+                  "partialFingerprints": {
+                    "primaryLocationLineHash": (.uuid)
                   }
-                  results.append(result)
- 
-              # Add rules to SARIF
-              sarif_template['runs'][0]['tool']['driver']['rules'] = list(rule_map.values())
-              sarif_template['runs'][0]['results'] = results
- 
-              with open(output_file, 'w') as f:
-                  json.dump(sarif_template, f, indent=2)
- 
-          convert_to_sarif('sonar-issues.json', 'sonar-issues.sarif')
-          EOF
- 
+                })
+              ]
+            }]
+          }' sonar-issues.json > sonar-issues.sarif
+
       - name: Upload JSON Issues
         uses: actions/upload-artifact@v4
         with:
           name: sonar-issues-json
           path: sonar-issues.json
- 
+
       - name: Upload SARIF Report
         uses: actions/upload-artifact@v4
         with:
           name: sonar-issues-sarif
           path: sonar-issues.sarif
- 
-      
