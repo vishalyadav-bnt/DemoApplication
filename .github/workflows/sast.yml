@@ -39,91 +39,38 @@ jobs:
 
       - name: Start SonarQube Container
         run: |
-          docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:community
           echo "Waiting for SonarQube to start..."
           timeout 900 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           docker logs sonarqube
           echo "SonarQube is ready"
 
-      - name: Generate SonarQube Token
+      - name: Create Project Key
         run: |
-          TOKEN=$(curl -u admin:admin -X POST "http://localhost:9000/api/users/generate_token?name=github_action" | jq -r .token)
-          echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
-          echo "::add-mask::$TOKEN"
-          echo "Tokens :  $TOKEN "
+          curl -X POST -u admin:new_password \
+            "http://localhost:9000/api/projects/create?project=Demo&name=Demo"
 
       - name: Build and Test
         run: |
-          cd Demo && ./gradlew clean build test --info
+          cd Demo && ./gradlew clean build test --info  
 
-      - name: Check or Create sonar-reports Directory
+      - name: Run Sonar Analysis with Gradle
+        run: ./gradlew sonar -Dsonar.host.url=http://localhost:9000 \
+                             -Dsonar.login=admin \
+                             -Dsonar.password=admin123 \
+                             -Dsonar.projectKey=Demo
+
+      - name: Generate SARIF Report
         run: |
-          mkdir -p sonar-reports    
+          curl -u admin:new_password \
+            "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false" \
+            -o issues.json
 
-      - name: Run SonarQube Analysis
-        env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
-        run: |
-          cd Demo && ./gradlew sonar \
-            -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.projectKey=demo-project \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.report.export.path=sonar-reports/sonar-report.json \
-            -Dsonar.analysis.mode=publish \
-            --info
-
-      - name: Check if SonarQube Report Exists
-        run: |
-          if [ ! -f sonar-reports/sonar-report.json ]; then
-            echo "SonarQube report not found!"
-            exit 1
-          else
-            echo "SonarQube report found!"
-          fi
-
-      - name: Create sonar-reports Directory if it Doesn't Exist
-        run: |
-          mkdir -p sonar-reports
-          
-      - name: Convert SonarQube JSON Report to SARIF
-        run: |
-          if [ ! -f sonar-reports/sonar-report.json ]; then
-            echo "SonarQube report not found at sonar-reports/sonar-report.json"
-            exit 1
-          fi
-
-          jq -n \
-            --arg version "2.1.0" \
-            --arg title "SonarQube Analysis" \
-            --argjson report "$(cat sonar-reports/sonar-report.json)" \
-            '{
-              "version": $version,
-              "runs": [ {
-                "tool": {
-                  "driver": {
-                    "name": $title,
-                    "informationUri": "http://localhost:9000"
-                  }
-                },
-                "results": $report.issues
-              } ]
-            }' > sonar-reports/sonar-report.sarif
-
-      - name: Upload SARIF File as Artifact
+      - name: Upload SARIF Report as Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: sonar-sarif-report
-          path: sonar-reports/sonar-report.sarif
-          retention-days: 30
-          if-no-files-found: warn
+          name: sonar-issues
+          path: issues.json
+      
 
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: |
-            Demo/build/libs/*.jar
-            Demo/build/reports/
-            Demo/build/test-results/
-          retention-days: 30
-          if-no-files-found: warn
+      
