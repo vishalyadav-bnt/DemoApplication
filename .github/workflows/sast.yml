@@ -66,7 +66,7 @@ jobs:
 
       - name: Build and Test
         run: |
-          cd Demo && ./gradlew clean build test --info  
+          cd Demo && ./gradlew clean build test 
 
       - name: Run Sonar Analysis with Gradle
         env:
