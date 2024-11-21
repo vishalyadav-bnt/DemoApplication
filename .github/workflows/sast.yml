@@ -14,10 +14,11 @@ permissions:
   actions: read
   issues: write
   pull-requests: write
+  packages: read
 
 jobs:
   sonarqube-scan:
-    name: Run SonarQube Analysis with TestContainers
+    name: Run SonarQube Analysis 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
