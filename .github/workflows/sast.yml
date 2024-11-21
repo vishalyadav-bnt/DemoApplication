@@ -10,11 +10,12 @@ on:
 
 permissions:
   contents: read
-  security-events: write
-  actions: read
+  packages: write
+  security-events: write 
+  actions: write
+  id-token: write
   issues: write
   pull-requests: write
-  packages: read
 
 jobs:
   sonarqube-scan:
