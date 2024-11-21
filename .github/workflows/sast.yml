@@ -72,6 +72,6 @@ jobs:
           path: sonar-issues.sarif
  
       - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: sonar-issues.sarif
