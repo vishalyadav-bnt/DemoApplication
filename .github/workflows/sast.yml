@@ -47,7 +47,7 @@ jobs:
 
       - name: Create Project Key
         run: |
-          curl -f -X POST -u admin:admin123 \
+          curl -f -X POST -u admin:admin \
             "http://localhost:9000/api/projects/create?project=Demo&name=Demo"
 
       - name: Build and Test
