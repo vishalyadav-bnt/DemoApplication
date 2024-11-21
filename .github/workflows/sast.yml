@@ -55,10 +55,12 @@ jobs:
           cd Demo && ./gradlew clean build test --info  
 
       - name: Run Sonar Analysis with Gradle
-        run: ./gradlew sonar -Dsonar.host.url=http://localhost:9000 \
-                             -Dsonar.login=admin \
-                             -Dsonar.password=admin123 \
-                             -Dsonar.projectKey=Demo
+        run: |
+          cd Demo && ./gradlew sonar \
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.login=admin \
+            -Dsonar.password=admin123 \
+            -Dsonar.projectKey=Demo
 
       - name: Generate SARIF Report
         run: |
