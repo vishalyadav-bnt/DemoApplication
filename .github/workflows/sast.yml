@@ -8,18 +8,17 @@ on:
     branches:
       - main
  
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  issues: write
+  pull-requests: write
+ 
 jobs:
   sonarqube-scan:
     name: Run SonarQube Analysis with TestContainers
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      security-events: write
-      actions: read
-      id-token: write
-      issues: write
-      pull-requests: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -29,49 +28,64 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 21
-          distribution: 'adopt'
+          distribution: 'temurin'
           cache: gradle
       - name: Make Gradle Wrapper Executable
         run: chmod +x Demo/gradlew
       - name: Start SonarQube Container
         run: |
-          docker run -d --name sonarqube -p 9000:9000 sonarqube:community
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
           echo "Waiting for SonarQube to start..."
-          timeout 900 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
+          timeout 180 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           docker logs sonarqube
           echo "SonarQube is ready"
       - name: Change Admin Password
         run: |
-          curl -X POST -u admin:admin \
+          curl -f -X POST -u admin:admin \
             "http://localhost:9000/api/users/change_password?login=admin&password=admin123&previousPassword=admin"
       - name: Create Project Key
         run: |
-          curl -X POST -u admin:admin123 \
+          curl -f -X POST -u admin:admin123 \
             "http://localhost:9000/api/projects/create?project=Demo&name=Demo"
       - name: Build and Test
         run: |
           cd Demo && ./gradlew clean build test --info  
       - name: Run Sonar Analysis with Gradle
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd Demo && ./gradlew sonar \
             -Dsonar.host.url=http://localhost:9000 \
             -Dsonar.login=admin \
             -Dsonar.password=admin123 \
-            -Dsonar.projectKey=Demo
- 
-      - name: Generate SARIF Report
+            -Dsonar.projectKey=Demo \
+            -Dsonar.qualitygate.wait=true
+      - name: Export SonarQube Issues
         run: |
-          curl -u admin:admin123 \
-            "http://localhost:9000/api/issues/sarif?projectKey=Demo" \
-            -o sonar-issues.sarif
-
-      - name: Upload SARIF Report as Artifact
+          curl -f -u admin:admin123 \
+            "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false&ps=500" \
+            -o sonar-issues.json
+ 
+      - name: Convert Issues to SARIF
+        uses: advanced-security/sarif-script-generator@v1
+        with:
+          input: sonar-issues.json
+          tool-name: SonarQube
+          output: sonar-issues.sarif
+ 
+      - name: Upload JSON Issues
         uses: actions/upload-artifact@v4
         with:
-          name: sonar-issues
+          name: sonar-issues-json
+          path: sonar-issues.json
+ 
+      - name: Upload SARIF Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-issues-sarif
           path: sonar-issues.sarif
  
       - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sonar-issues.sarif
