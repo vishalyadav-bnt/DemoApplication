@@ -64,7 +64,7 @@ jobs:
 
       - name: Generate SARIF Report
         run: |
-          curl -u admin:new_password \
+          curl -u admin:admin123 \
             "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false" \
             -o issues.json
 
