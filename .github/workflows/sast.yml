@@ -44,6 +44,12 @@ jobs:
           timeout 900 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000/api/system/status)" != "200" ]]; do sleep 5; done' || false
           docker logs sonarqube
           echo "SonarQube is ready"
+      
+      - name: Change Admin Password
+        run: |
+          curl -X POST -u admin:admin \
+            "http://localhost:9000/api/users/change_password?login=admin&password=admin123&previousPassword=admin"
+
 
       - name: Create Project Key
         run: |
@@ -64,7 +70,7 @@ jobs:
 
       - name: Generate SARIF Report
         run: |
-          curl -u admin:new_password \
+          curl -u admin: \
             "http://localhost:9000/api/issues/search?componentKeys=Demo&resolved=false" \
             -o issues.json
 
