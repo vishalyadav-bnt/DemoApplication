@@ -78,7 +78,7 @@ This repository includes:
 ## Outputs
 
 - **Code Quality Analysis**: Comprehensive feedback on code quality and potential vulnerabilities.
-- **SARIF Report**: A report compatible with GitHub’s security tools, enabling detailed inspection of findings.
+- **SARIF Report**:A report compatible with GitHub’s security tools, enabling detailed inspection of findings. The SARIF report will be stored in the artifacts section for download and further analysis.
 
 
 
@@ -168,102 +168,6 @@ git push origin main
 4. **Artifact Upload**:
 - Detailed test results are saved and uploaded to GitHub.
 
-## GitHub Actions Workflow
-### Here’s the full GitHub Actions workflow defined in .github/workflows/performance-test.yml :
-```
-name: Performance Test with K6
-on:
-  push:
-    branches:
-      - main
-jobs:
-  performance-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'microsoft'
-          java-version: '21'
-      - name: Grant execute permission for gradlew
-        run: chmod +x Demo/gradlew
-      - name: Build the JAR file
-        run: cd Demo && ./gradlew build
-      - name: Create Docker Network
-        run: docker network create k6-network
-      - name: Build and Start WebService
-        run: |
-          cd Demo
-          docker build -t demo .
-          docker run -d --network k6-network --name web-service -p 8080:8080 demo
-      - name: Wait for WebService to be Ready
-        run: |
-          max_attempts=30
-          attempt=0
-          while [ $attempt -lt $max_attempts ]; do
-            if docker run --rm --network k6-network curlimages/curl:latest curl -s http://web-service:8080/health; then
-              echo "Service is up and running!"
-              break
-            fi
-            echo "Waiting for service to be ready... (Attempt $((attempt+1))/$max_attempts)"
-            sleep 5
-            attempt=$((attempt+1))
-          done
-          if [ $attempt -eq $max_attempts ]; then
-            echo "Service did not become ready in time"
-            docker logs web-service
-            exit 1
-          fi
-      - name: Prepare Results Directory
-        run: |
-          mkdir -p ${{ github.workspace }}/Demo/results
-          chmod 777 ${{ github.workspace }}/Demo/results
-      - name: Run K6 Performance Test
-        run: |
-          docker run --rm \
-            --network k6-network \
-            -v ${{ github.workspace }}/Demo/k6/script:/scripts \
-            -v ${{ github.workspace }}/Demo/results:/results \
-            -w /results \
-            grafana/k6:latest run \
-            --summary-export=k6-test-result.json \
-            -e URL=http://web-service:8080 \
-            -e VUS=50 \
-            -e DURATION=30s \
-            -e MAX_AVG_TIME=500 \
-            /scripts/k6-load-test.js
-      - name: Check Test Result
-        id: test_result
-        run: |
-          result=$(cat ${{ github.workspace }}/Demo/results/k6-test-result.json | jq -r '.metrics.http_req_failed.count // 0')
-          if [ "$result" -gt 0 ]; then
-            echo "Test Failed! Number of failed requests: $result"
-            echo "status=failure" >> $GITHUB_OUTPUT
-            exit 1
-          else
-            echo "Test Passed!"
-            echo "status=success" >> $GITHUB_OUTPUT
-          fi
-      - name: Upload Passed Test Results
-        if: steps.test_result.outputs.status == 'success'
-        uses: actions/upload-artifact@v4
-        with:
-          name: performance-test-passed
-          path: |
-            Demo/results/k6-test-result.json
-            Demo/results/report.txt
-      - name: Upload Failed Test Results
-        if: steps.test_result.outputs.status == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: performance-test-failed
-          path: |
-            Demo/results/k6-test-result.json
-            Demo/results/report.txt
-
-```
 ### Workflow Steps
 1. **Checkout Code**:
   - Clones the repository.
@@ -276,12 +180,16 @@ jobs:
 5. **Run K6 Performance Tests**:
   - Executes tests using the parameters in test-config.env.
 6. **Upload Results**:
-  - Uploads test results (test_result.json, report.txt) as GitHub artifacts.
+  - Uploads test results (tk6-test-result.json, report.txt) as GitHub artifacts.
 
 ## Test Results and Reporting
 ### Artifacts:
-- summary.json: Detailed JSON test report.
+- k6-test-result.json: Detailed JSON test report.
 - report.txt: Human-readable test summary.
+### Result Comparison:
+You can compare test results using both the summary.json and report.txt files:
+summary.json: This file provides data in a structured JSON format, making it ideal for automated comparisons or further processing using tools or scripts.
+report.txt: This file offers a simple, human-readable summary that you can manually review to spot differences or trends in test performance or results.
 
 ##  References
 ## Documentation Links
