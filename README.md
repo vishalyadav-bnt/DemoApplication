@@ -1,4 +1,14 @@
-# Static Application Security Testing with SonarQube and GitHub Actions
+# **Automated Performance Testing with K6 And Static Application Security Testing with SonarQube.**
+This repository demonstrates the implementation of **Automated Performance Testing** with K6 and **Static Application Security Testing (SAST)** with SonarQube using GitHub Actions. It provides examples of performance and security testing frameworks, showcasing workflows that ensure high-quality and secure code deployment.
+
+## Table of Contents
+
+1. [Static Application Security Testing (SAST)](#static-application-security-testing-sast)
+2. [Automated Performance Testing Using K6](#automated-performance-testing)
+
+---
+# 🌟  Static Application Security Testing with SonarQube and GitHub Actions
+
 
 This repository demonstrates the implementation of a **GitHub Actions workflow** to perform **Static Application Security Testing (SAST)** using **SonarQube Community Edition**. The workflow leverages **TestContainers** to run a temporary SonarQube server and stores the output SARIF report in the **GitHub Packages**.
 
@@ -69,6 +79,229 @@ This repository includes:
 
 - **Code Quality Analysis**: Comprehensive feedback on code quality and potential vulnerabilities.
 - **SARIF Report**: A report compatible with GitHub’s security tools, enabling detailed inspection of findings.
+
+
+
+
+---
+# 🌟 Automated Performance Testing with K6 and GitHub Actions
+
+This repository implements an automated performance testing framework using **K6**, **TestContainers**, and **GitHub Actions**. It includes a Spring Boot application (WebService) and uses Dockerized K6 to run performance tests. Test results are pushed to **GitHub Packages**.
+
+
+
+## Project Features
+1. **Spring Boot Application**:
+   - A RESTful web service running inside a container.
+2. **Performance Testing**:
+   - Uses [K6](https://k6.io/) to test the application's performance.
+3. **Automated Orchestration**:
+   - Orchestrated using **GitHub Actions**.
+4. **Externalized Test Configurations**:
+   - Input parameters for tests are defined in external files for flexibility.
+5. **Result Publishing**:
+   - Performance results are saved and uploaded to GitHub as artifacts.
+
+---
+
+## Prerequisites
+- **GitHub Account**: A GitHub repository to host the workflow.
+- **Docker Installed**: Required to build and run containers locally (optional).
+- **Java JDK 21**: Used to build the Spring Boot application.
+- **Gradle**: To build and package the Spring Boot application.
+- **GitHub Actions Enabled**: To run the CI/CD pipeline.
+
+---
+
+## Repository Structure
+```
+.
+├── Demo/         # Spring Boot application
+│   ├── Dockerfile               # Dockerfile to containerize the application
+│   ├── gradlew                  # Gradle wrapper
+│   ├── build.gradle             # Gradle build file
+│   ├── src/                     # Application source code
+│   └── results/                 # Directory to store test results
+├── k6/
+│   ├── script/
+│      └── performance-test.js  # K6 performance test script   
+├── .github/
+│   └── workflows/
+│       └── performance-test.yml # GitHub Actions workflow file
+└── README.md                    # This documentation
+```
+
+## Setup and Configuration
+### Step 1: Clone the Repository
+```
+git clone (https://github.com/NimbusPay-Technologies-Inc/umesh-sast-demo.git)
+cd Demo
+```
+### Step 2:  Build the Project Using Gradle
+```
+./gradlew clean build
+```
+- Once the repository is cloned, you can trigger the GitHub Actions workflow for automated performance testing.
+### step 3: Trigger GitHub Actions Workflow
+- Verify Repository Setup:
+Ensure all required files are in the repository, including the K6 test scripts, Dockerfile, and GitHub Actions workflow (.github/workflows).
+- Commit and Push Changes:
+If you make any updates or changes to the repository, push them to the main branch to trigger the GitHub Actions workflow:
+```
+git add .
+git commit -m "Updated configuration or code"
+git push origin main
+```
+### step 4: Monitor Workflow Execution:
+
+- Go to your repository on GitHub.
+- Click on the Actions tab.
+- Select the latest workflow run to view the logs and status of each step.
+
+## How It Works
+1. **Web Service Deployment**:
+- The Spring Boot application is built and deployed in a container.
+2. **K6 Performance Tests**:
+- K6 simulates a predefined load on the service and evaluates performance.
+3. **Result Validation**:
+- Test results are validated against thresholds.
+4. **Artifact Upload**:
+- Detailed test results are saved and uploaded to GitHub.
+
+## GitHub Actions Workflow
+### Here’s the full GitHub Actions workflow defined in .github/workflows/performance-test.yml :
+```
+name: Performance Test with K6
+on:
+  push:
+    branches:
+      - main
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '21'
+      - name: Grant execute permission for gradlew
+        run: chmod +x Demo/gradlew
+      - name: Build the JAR file
+        run: cd Demo && ./gradlew build
+      - name: Create Docker Network
+        run: docker network create k6-network
+      - name: Build and Start WebService
+        run: |
+          cd Demo
+          docker build -t demo .
+          docker run -d --network k6-network --name web-service -p 8080:8080 demo
+      - name: Wait for WebService to be Ready
+        run: |
+          max_attempts=30
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            if docker run --rm --network k6-network curlimages/curl:latest curl -s http://web-service:8080/health; then
+              echo "Service is up and running!"
+              break
+            fi
+            echo "Waiting for service to be ready... (Attempt $((attempt+1))/$max_attempts)"
+            sleep 5
+            attempt=$((attempt+1))
+          done
+          if [ $attempt -eq $max_attempts ]; then
+            echo "Service did not become ready in time"
+            docker logs web-service
+            exit 1
+          fi
+      - name: Prepare Results Directory
+        run: |
+          mkdir -p ${{ github.workspace }}/Demo/results
+          chmod 777 ${{ github.workspace }}/Demo/results
+      - name: Run K6 Performance Test
+        run: |
+          docker run --rm \
+            --network k6-network \
+            -v ${{ github.workspace }}/Demo/k6/script:/scripts \
+            -v ${{ github.workspace }}/Demo/results:/results \
+            -w /results \
+            grafana/k6:latest run \
+            --summary-export=k6-test-result.json \
+            -e URL=http://web-service:8080 \
+            -e VUS=50 \
+            -e DURATION=30s \
+            -e MAX_AVG_TIME=500 \
+            /scripts/k6-load-test.js
+      - name: Check Test Result
+        id: test_result
+        run: |
+          result=$(cat ${{ github.workspace }}/Demo/results/k6-test-result.json | jq -r '.metrics.http_req_failed.count // 0')
+          if [ "$result" -gt 0 ]; then
+            echo "Test Failed! Number of failed requests: $result"
+            echo "status=failure" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "Test Passed!"
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload Passed Test Results
+        if: steps.test_result.outputs.status == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-passed
+          path: |
+            Demo/results/k6-test-result.json
+            Demo/results/report.txt
+      - name: Upload Failed Test Results
+        if: steps.test_result.outputs.status == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-failed
+          path: |
+            Demo/results/k6-test-result.json
+            Demo/results/report.txt
+
+```
+### Workflow Steps
+1. **Checkout Code**:
+  - Clones the repository.
+2. **Set up JDK**:
+  - Configures Java 21 for the project.
+3. **Build Application**:
+  - Builds the Spring Boot application using Gradle.
+4. **Run Dockerized Service**:
+  - Deploys the application in a container.
+5. **Run K6 Performance Tests**:
+  - Executes tests using the parameters in test-config.env.
+6. **Upload Results**:
+  - Uploads test results (test_result.json, report.txt) as GitHub artifacts.
+
+## Test Results and Reporting
+### Artifacts:
+- summary.json: Detailed JSON test report.
+- report.txt: Human-readable test summary.
+
+##  References
+## Documentation Links
+
+- [Spring Boot Documentation](https://spring.io/projects/spring-boot)  
+  Comprehensive guide for developing applications with Spring Boot, including setup, configuration, and deployment.
+
+- [K6 Documentation](https://k6.io/docs/)  
+  Official documentation for K6, covering load testing concepts, scripting, metrics, and more.
+
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)  
+  Detailed guide on using GitHub Actions to automate workflows, including examples for CI/CD pipelines.
+
+- [Docker Documentation](https://docs.docker.com/)  
+  Complete reference for Docker, from installation to building and managing containers.
+
+
+  
+
+
 
 
 
