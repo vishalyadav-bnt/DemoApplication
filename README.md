@@ -48,8 +48,8 @@ The GitHub Actions workflow performs the following steps:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/vishalyadav-bnt/DemoApplication.git
-cd DemoApplication
+git clone [https://github.com/NimbusPay-Technologies-Inc/umesh-sast-demo.git]
+cd Demo
 ```
 
 ## How to Use
